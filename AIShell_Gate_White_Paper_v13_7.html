@@ -528,7 +528,7 @@ execve(argv[0], argv, safe_environment)</code></pre>
 
     <p>AIShell-Gate's position on this is consistent with its broader design philosophy: the gate does not prohibit, it makes explicit. Self-Referential API Access to an AI inference endpoint during an AI-sourced session triggers a confirmation requirement — the human operator is informed and must approve. If the operator intended the sub-delegation, they approve and it proceeds. If they did not, the gate catches something they would want to know about. The typed confirmation challenge, displayed only on the operator's terminal, ensures that the approval is genuinely human regardless of what the AI agent can observe. This distinction — between delegating generation, which is acceptable, and delegating judgment, which is not — is the ethical boundary that the confirmation gate enforces.<sup class="cite"><a href="#ref10">[10]</a></sup> When an AI agent attempts to recruit a second model for a policy decision, it is attempting to delegate judgment to a system that cannot be held accountable for the consequences.</p>
 
-    <p>Model Sub-Delegation occurring through Self-Referential API Access — specifically the unaware or uncontrolled form — is a threat that did not exist before local inference became practical. It has no coverage in conventional security tooling, which is concerned with what commands an AI generates, not with whether the AI is consulting additional models during execution. It is related to but distinct from prompt injection<sup class="cite"><a href="#ref6">[6]</a></sup> — prompt injection operates at the language model input layer; Self-Referential API Access operates at the execution layer, using shell commands rather than crafted text to recruit a second model.</p>
+    <p>Model Sub-Delegation occurring through Self-Referential API Access — specifically the unaware or uncontrolled form — is a threat that did not exist before local inference became practical. It has no coverage in conventional security tooling, which is concerned with what commands an AI generates, not with whether the AI is consulting additional models during execution. It is related to but distinct from prompt injection<sup class="cite"><a href="#ref6">[6]</a></sup> — prompt injection operates at the language model input layer; Self-Referential API Access operates at the execution layer, using shell commands rather than crafted text to recruit a second model. It is also related to but more specific than the OWASP LLM Top 10 category of Excessive Agency<sup class="cite"><a href="#ref11">[11]</a></sup> — Excessive Agency addresses AI systems taking consequential actions beyond their intended scope; Model Sub-Delegation addresses the narrower case where an AI agent specifically recruits a second inference system to influence a policy decision governing the first agent's own execution session.</p>
 
     <p>AIShell-Gate addresses this through a layered loopback and port-awareness system introduced in v1.01 and substantially expanded in v1.02.</p>
 
@@ -921,8 +921,8 @@ snprintf(buf, sizeof buf,
 
     <div class="glossary-entry">
       <div class="glossary-term">Epistemic Honesty <span class="term-cat">Design Principle</span></div>
-      <p class="glossary-def">The design principle that the system never implies it evaluated something and found it safe when it did not. In AIShell-Gate, an unknown flag produces a <code>FLAG_UNKNOWN</code> output explicitly labelled "risk unassessed, not evaluated as safe" rather than a silent pass or an implicit allow. Unknown root keys in a policy file are rejected with a named error rather than silently ignored. A failed policy load produces an explicit error rather than a silent fallback to a permissive state. Epistemic Honesty distinguishes AIShell-Gate from tools that treat the absence of a denial as an implicit safety determination.</p>
-      <div class="glossary-ref">See §13 (Design Principles) · Related: Zero-Effect Fail-Closed, Default Deny</div>
+      <p class="glossary-def">The design principle that a system must never represent an unevaluated state as a safe one. The term applies the philosophical concept of epistemic honesty — truthfulness about the limits of one's knowledge — to system design. The novel contribution is the specific design obligation it creates: where conventional security tools treat the absence of a denial as an implicit pass, AIShell-Gate treats it as an explicit gap. An unknown flag produces a <code>FLAG_UNKNOWN</code> output labelled "risk unassessed, not evaluated as safe." Unknown root keys in a policy file are rejected with a named error. A failed policy load produces an explicit error rather than a silent fallback. The philosophical source concept is established; its formalisation as a named system design principle in the AI execution security context is introduced here.</p>
+      <div class="glossary-ref">See §13 (Design Principles) · Related: Zero-Effect Fail-Closed, Default Deny · Philosophical lineage: epistemology, open design (Saltzer &amp; Schroeder [4])</div>
     </div>
 
     <div class="glossary-entry">
@@ -1042,6 +1042,17 @@ snprintf(buf, sizeof buf,
           AIShell Labs LLC, Winston-Salem NC, 2026. Version 2.2.
           <a href="https://www.aishell.org">www.aishell.org</a>
           — Develops the cognitive engineering framework for human–AI collaboration, including the Constraint-First pattern (§12), the Safety-First Systems architecture principles (§21), and the ethics of co-design (§24). Three principles from this work inform AIShell-Gate's design directly: that the architecture of safety must precede the architecture of capability; that delegating generation to AI is acceptable while delegating judgment is not; and that trust emerges from inspectability rather than from performance alone.
+        </span>
+      </li>
+
+      <li>
+        <span class="ref-num" id="ref11">[11]</span>
+        <span class="ref-body">
+          OWASP Foundation.
+          <em>"OWASP Top 10 for Large Language Model Applications."</em>
+          Version 2025. OWASP LLM AI Security &amp; Governance Checklist.
+          <a href="https://owasp.org/www-project-top-10-for-large-language-model-applications/">owasp.org/www-project-top-10-for-large-language-model-applications</a>
+          — Defines LLM06 (Excessive Agency): AI systems taking consequential actions beyond their intended scope. Model Sub-Delegation as defined in this paper is a more specific sub-case: an AI agent recruiting a second inference system to influence a policy decision governing the first agent's own execution session, distinguished from the broader Excessive Agency category by the inference-layer recruitment mechanism and the specific policy bypass intent.
         </span>
       </li>
 
