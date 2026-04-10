@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIShell-Gate — A Validation Layer for AI-to-Unix Execution (White Paper v13)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap');
+
+  :root {
+    --bg:           #0f1117;
+    --bg-panel:     #161b25;
+    --bg-code:      #0a0d12;
+    --bg-note:      #0e1a2a;
+    --bg-aside:     #141210;
+    --border:       #2a3040;
+    --border-acc:   #3a6ea8;
+    --border-aside: #6a4e2a;
+    --text:         #c8cdd6;
+    --text-dim:     #6b7485;
+    --text-head:    #e8eaf0;
+    --text-aside:   #b8a898;
+    --accent:       #4a9eda;
+    --accent2:      #7ec8a0;
+    --accent3:      #e0a060;
+    --code-kw:      #7ec8a0;
+    --code-com:     #5a6880;
+    --rule:         #2a3a50;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Serif', Georgia, serif;
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+
+  .page { max-width: 860px; margin: 0 auto; padding: 3rem 2.5rem 6rem; }
+
+  /* ── Masthead ── */
+  .masthead { border-bottom: 1px solid var(--border-acc); padding-bottom: 2rem; margin-bottom: 3rem; }
+  .masthead .eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.8rem; }
+  .masthead h1 { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 1.55rem; line-height: 1.35; color: var(--text-head); letter-spacing: -0.01em; }
+  .masthead .subtitle { margin-top: 0.6rem; font-style: italic; color: var(--text-dim); font-size: 0.92rem; }
+
+  /* ── Security positioning banner ── */
+  .security-banner {
+    background: var(--bg-note);
+    border: 1px solid var(--border-acc);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.4rem;
+    margin-bottom: 3rem;
+    font-size: 0.88rem;
+    color: var(--text);
+  }
+  .security-banner strong { color: var(--accent); font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; display: block; margin-bottom: 0.5rem; }
+
+  /* ── TOC ── */
+  .toc { background: var(--bg-panel); border: 1px solid var(--border); border-left: 3px solid var(--accent); padding: 1.4rem 1.8rem; margin-bottom: 3.5rem; }
+  .toc .toc-title { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.8rem; }
+  .toc ol { list-style: decimal; padding-left: 1.4rem; column-count: 2; column-gap: 2rem; }
+  .toc li { margin: 0.25rem 0; break-inside: avoid; }
+  .toc a { color: var(--accent); text-decoration: none; font-size: 0.88rem; font-family: 'IBM Plex Mono', monospace; }
+  .toc a:hover { color: var(--text-head); }
+
+  /* ── Sections ── */
+  section { margin-bottom: 3rem; }
+  h2 { font-family: 'IBM Plex Mono', monospace; font-size: 1.05rem; font-weight: 600; color: var(--text-head); letter-spacing: 0.01em; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--rule); display: flex; align-items: baseline; gap: 0.7rem; }
+  h2 .section-num { font-size: 0.65rem; color: var(--accent); letter-spacing: 0.1em; flex-shrink: 0; }
+  h3 { font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; font-weight: 600; color: var(--accent2); letter-spacing: 0.04em; text-transform: uppercase; margin: 1.8rem 0 0.6rem; }
+  p { margin-bottom: 1rem; }
+
+  /* ── Code ── */
+  code { font-family: 'IBM Plex Mono', monospace; font-size: 0.82em; color: var(--accent2); background: var(--bg-code); padding: 0.1em 0.35em; border-radius: 2px; }
+  pre { background: var(--bg-code); border: 1px solid var(--border); border-left: 3px solid var(--border-acc); padding: 1.2rem 1.4rem; overflow-x: auto; margin: 1.2rem 0 1.4rem; line-height: 1.55; }
+  pre code { background: none; padding: 0; color: var(--text); font-size: 0.8rem; }
+  pre .cm { color: var(--code-com); font-style: italic; }
+  pre .fn { color: var(--code-kw); }
+
+  /* ── Diagram ── */
+  .diagram { background: var(--bg-code); border: 1px solid var(--border); padding: 1.4rem 2rem; margin: 1.4rem 0; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; line-height: 1.9; color: var(--text-dim); overflow-x: auto; }
+  .diagram .node  { color: var(--accent); font-weight: 600; }
+  .diagram .arrow { color: var(--border-acc); }
+  .diagram .label { color: var(--text-dim); font-style: italic; }
+  .diagram .sub   { color: var(--accent2); }
+
+  /* ── Table ── */
+  .data-table { width: 100%; border-collapse: collapse; margin: 1.2rem 0 1.6rem; font-size: 0.875rem; }
+  .data-table thead tr { background: var(--bg-panel); border-bottom: 2px solid var(--border-acc); }
+  .data-table th { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); padding: 0.6rem 0.9rem; text-align: left; }
+  .data-table td { padding: 0.55rem 0.9rem; border-bottom: 1px solid var(--border); vertical-align: top; color: var(--text); }
+  .data-table td:first-child { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--accent2); }
+  .data-table tbody tr:hover { background: var(--bg-panel); }
+
+  /* ── Callouts ── */
+  .note { background: var(--bg-note); border: 1px solid var(--border-acc); border-left: 3px solid var(--accent); padding: 0.8rem 1.2rem; margin: 1.2rem 0 1.4rem; font-size: 0.88rem; color: var(--text); }
+  .note strong { color: var(--accent); font-family: 'IBM Plex Mono', monospace; }
+  .aside { background: var(--bg-aside); border-left: 3px solid var(--border-aside); padding: 0.85rem 1.25rem; margin: 1.2rem 0 1.5rem; font-size: 0.91rem; color: var(--text-aside); font-style: italic; line-height: 1.7; }
+  .aside strong { color: var(--accent3); font-family: 'IBM Plex Mono', monospace; font-style: normal; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; display: block; margin-bottom: 0.35rem; }
+
+  /* ── Lists ── */
+  ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+  li { margin: 0.35rem 0; }
+  li code { font-size: 0.82em; }
+
+  /* ── Flow ── */
+  .flow { background: var(--bg-panel); border: 1px solid var(--border); padding: 1.2rem 1.8rem; margin: 1.2rem 0 1.4rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.83rem; color: var(--text-dim); line-height: 2; }
+  .flow .step { color: var(--text); }
+  .flow .arrow { color: var(--accent); }
+
+  /* ── Footer ── */
+  .doc-footer { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--border-acc); }
+  .doc-footer .footer-copyright { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 1rem; }
+  .doc-footer .footer-body { font-size: 0.78rem; line-height: 1.65; color: var(--text-dim); }
+  .doc-footer .footer-body p { margin-bottom: 0.6rem; }
+
+  .masthead .author { margin-top: 1rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; color: var(--text-dim); }
+  .masthead .author a { color: var(--accent); text-decoration: none; }
+  .masthead .author a:hover { color: var(--text-head); }
+  .masthead .book-ref { margin-top: 0.35rem; font-size: 0.78rem; color: var(--text-dim); font-style: italic; }
+
+  .abstract { background: var(--bg-panel); border: 1px solid var(--border); border-left: 3px solid var(--accent2); padding: 1.2rem 1.6rem; margin-bottom: 2.5rem; }
+  .abstract .abstract-label { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent2); margin-bottom: 0.6rem; }
+  .abstract p { font-size: 0.9rem; color: var(--text); margin-bottom: 0; line-height: 1.7; }
+
+  .threat-table { width: 100%; border-collapse: collapse; margin: 1.2rem 0 1.6rem; font-size: 0.875rem; }
+  .threat-table thead tr { background: var(--bg-panel); border-bottom: 2px solid var(--border-acc); }
+  .threat-table th { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); padding: 0.6rem 0.9rem; text-align: left; }
+  .threat-table td { padding: 0.55rem 0.9rem; border-bottom: 1px solid var(--border); vertical-align: top; color: var(--text); }
+  .threat-table td:first-child { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--accent2); white-space: nowrap; }
+  .threat-table tbody tr:hover { background: var(--bg-panel); }
+
+  /* ── Citations ── */
+  sup.cite { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; color: var(--accent); vertical-align: super; line-height: 0; margin-left: 0.1em; }
+  sup.cite a { color: var(--accent); text-decoration: none; }
+  sup.cite a:hover { color: var(--text-head); }
+
+  /* ── References ── */
+  .ref-list { list-style: none; padding: 0; margin: 0; }
+  .ref-list li { display: flex; gap: 1rem; margin-bottom: 1.1rem; font-size: 0.875rem; line-height: 1.65; }
+  .ref-list li .ref-num { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--accent); flex-shrink: 0; width: 1.8rem; padding-top: 0.15rem; }
+  .ref-list li .ref-body { color: var(--text); }
+  .ref-list li .ref-body em { color: var(--accent2); font-style: italic; }
+  .ref-list li .ref-body a { color: var(--accent); text-decoration: none; font-family: 'IBM Plex Mono', monospace; font-size: 0.78em; }
+  .ref-list li .ref-body a:hover { color: var(--text-head); }
+  .glossary-entry { margin-bottom: 1.6rem; padding-bottom: 1.6rem; border-bottom: 1px solid var(--border); }
+  .glossary-entry:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .glossary-term { font-family: 'IBM Plex Mono', monospace; font-size: 0.95rem; font-weight: 600; color: var(--accent2); letter-spacing: 0.02em; margin-bottom: 0.3rem; }
+  .glossary-term .term-cat { font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-left: 0.8rem; font-weight: 400; }
+  .glossary-def { font-size: 0.9rem; color: var(--text); line-height: 1.75; margin-bottom: 0.4rem; }
+  .glossary-ref { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--text-dim); }
+  .glossary-ref a { color: var(--accent); text-decoration: none; }
+
+  @media (max-width: 640px) { .page { padding: 1.5rem 1.2rem 4rem; } .toc ol { column-count: 1; } pre { font-size: 0.73rem; } }
+  @media print {
+    body { background: white; color: black; }
+    .page { max-width: 100%; padding: 1rem; }
+    pre, .diagram, .flow { background: #f4f4f4; border-color: #ccc; }
+    pre code { color: black; }
+    .note { background: #eef4fb; border-color: #4a9eda; }
+    .aside { background: #f9f5f0; border-color: #b08050; color: #444; }
+    a { color: #1a5fa0; }
+    .doc-footer { border-top-color: #aaa; }
+    .doc-footer .footer-copyright, .doc-footer .footer-body { color: #555; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <div class="eyebrow">AIShell-Gate — White Paper &nbsp;·&nbsp; v13</div>
+    <h1>A Validation Layer for<br>AI-to-Unix Execution</h1>
+    <p class="subtitle">AIShell-Gate as an AI Execution Gateway: a deterministic policy layer mediating between probabilistic AI systems and deterministic infrastructure.</p>
+    <p class="subtitle" style="margin-top:0.4rem; font-size:0.72rem; font-family:'IBM Plex Mono',monospace; letter-spacing:0.06em; color:var(--text-dim);">aishell-gate-policy 1.02 beta &nbsp;·&nbsp; aishell-gate-exec 0.36.0</p>
+    <p class="author">
+      Sean T. Gilley &nbsp;·&nbsp; AIShell Labs LLC &nbsp;·&nbsp; Winston-Salem NC USA<br>
+      <a href="https://www.aishellgate.com">www.aishellgate.com</a> &nbsp;·&nbsp; <a href="https://www.aishell.org">www.aishell.org</a>
+    </p>
+    <p class="book-ref">Author of <em>The Shape of Intent: Steering Artificial Intelligence in Cognitive Collaboration</em></p>
+    <p class="subtitle" style="margin-top:0.8rem; font-size:0.72rem; font-family:'IBM Plex Mono', monospace; letter-spacing:0.06em; color:var(--text-dim);">Copyright &copy; 2026 AIShell Labs LLC. All Rights Reserved. Use of this software requires a valid license.</p>
+  </header>
+
+  <div class="security-banner">
+    <strong>Security Positioning</strong>
+    AIShell-Gate is not a standalone security product and does not replace operating system, network, or organizational security controls. It is a risk-reduction layer designed to formalize and evaluate AI-initiated actions before execution. AIShell-Gate is hardened and engineered to operate as a controlled execution boundary, but it is intended to function as one component within a broader security architecture. It should be deployed alongside standard access controls, system permissions, monitoring, and established security practices.
+  </div>
+
+  <div class="abstract">
+    <div class="abstract-label">Abstract</div>
+    <p>Large language models are increasingly used to generate Unix shell commands in operational and development environments. Their output is probabilistic; Unix execution is deterministic and irreversible. This structural mismatch creates a missing layer between AI suggestion and system execution. AIShell-Gate addresses that gap with a deterministic policy engine and execution gateway implemented in portable C with no external dependencies. Every proposed command is evaluated against a configurable, layered policy before execution; the policy engine and executor are separated into distinct processes across a hard OS boundary so that neither can subvert the other. The system enforces argument-level access controls, path restrictions, network target rules, and risk-scored confirmation escalation, and produces a tamper-evident HMAC-SHA256 audit chain of every decision. A novel threat class addressed by version 1.02 is <em>Model Sub-Delegation</em> — an AI agent consulting a second inference system to influence a policy decision without the operator's knowledge. The specific mechanism is <em>Self-Referential API Access</em>: the agent contacts local inference endpoints from within a gated execution session. The practice is not inherently prohibited; AIShell-Gate's gate ensures the operator is aware it is occurring and explicitly approves it, converting an invisible action into a conscious decision. The architecture is intended to occupy the specific gap between unrestricted AI shell access and no AI integration at all, providing a practical, auditable execution boundary for organizations introducing AI into Unix workflows. This paper introduces a formal glossary of terminology coined for the AI execution security domain, including <em>Model Sub-Delegation</em>, <em>Self-Referential API Access</em>, <em>Command-Coded Confirmation</em>, <em>Zero-Effect Fail-Closed</em>, <em>Declared and Injected Source Identity</em>, <em>Epistemic Honesty</em>, and <em>Execution Posture</em>. See §18.</p>
+  </div>
+
+  <nav class="toc" aria-label="Table of contents">
+    <div class="toc-title">Contents</div>
+    <ol>
+      <li><a href="#problem">The Problem</a></li>
+      <li><a href="#stack">Where AIShell-Gate Sits in the Stack</a></li>
+      <li><a href="#what">What AIShell-Gate Is</a></li>
+      <li><a href="#architecture">Internal Architecture</a></li>
+      <li><a href="#policy">Policy Layer Model</a></li>
+      <li><a href="#usage">Intended Usage Model</a></li>
+      <li><a href="#examples">Example Decisions</a></li>
+      <li><a href="#integration">Example of Full Integration</a></li>
+      <li><a href="#not">What AIShell-Gate Is Not</a></li>
+      <li><a href="#threatmodel">Threat Model</a></li>
+      <li><a href="#selfcall">Model Sub-Delegation &amp; Self-Referential API Access</a></li>
+      <li><a href="#source">Source Code: Security in Practice</a></li>
+      <li><a href="#principles">Design Principles</a></li>
+      <li><a href="#who">Who Needs This</a></li>
+      <li><a href="#features">Current Implementation Features</a></li>
+      <li><a href="#audit">Audit and Accountability</a></li>
+      <li><a href="#status">Status</a></li>
+      <li><a href="#glossary">Terminology Glossary</a></li>
+      <li><a href="#references">References</a></li>
+    </ol>
+  </nav>
+
+  <!-- ── 1 ── -->
+  <section id="problem">
+    <h2><span class="section-num">01</span> The Problem</h2>
+
+    <p>Large language models are increasingly used to generate shell commands. They are good at it. They are also probabilistic.</p>
+
+    <p>Unix execution, by contrast, is deterministic and irreversible. A single misplaced flag, path, or wildcard can delete data, overwrite files, or alter system state permanently.</p>
+
+    <p>This creates a structural mismatch: AI output is statistical. Unix execution is exact.<sup class="cite"><a href="#ref1">[1]</a></sup> The distinction has a practical consequence that Gilley articulates in the broader context of AI collaboration: brought intent, AI produces leverage; brought confusion, it generates the appearance of progress.<sup class="cite"><a href="#ref10">[10]</a></sup> In the Unix execution context, the appearance of progress is a particularly dangerous failure mode — a command that looks correct executes with the same irreversibility as one that is correct.</p>
+
+    <p>When AI-generated commands are introduced into production workflows, there is a missing layer between suggestion and execution. That missing layer is policy. AIShell-Gate exists to provide that layer.</p>
+
+    <p>Trust in AI systems cannot be achieved by attempting to make probabilistic models perfectly reliable. Instead, trust emerges from architecture: deterministic boundaries that govern how AI-generated actions interact with real systems.<sup class="cite"><a href="#ref2">[2]</a></sup> AIShell-Gate addresses one such boundary — Unix command execution — converting probabilistic AI suggestions into controlled, auditable system operations.</p>
+  </section>
+
+  <!-- ── 2 ── -->
+  <section id="stack">
+    <h2><span class="section-num">02</span> Where AIShell-Gate Sits in the Stack</h2>
+
+    <p>AIShell-Gate is not an AI system and not a shell. It is a policy boundary between AI-generated commands and Unix execution.</p>
+
+    <div class="diagram">
+<span class="node">AI Agent</span>
+<span class="arrow">    │</span>  <span class="label">proposes actions</span>
+<span class="arrow">    ▼</span>
+<span class="node">Execution Planner</span>  <span class="label">(JSON plan describing commands)</span>
+<span class="arrow">    │</span>
+<span class="arrow">    ▼</span>
+<span class="node">aishell-gate-policy</span>  <span class="label">◄ deterministic policy evaluation</span>
+<span class="arrow">    │</span>  <span class="label">ALLOW / DENY decision</span>
+<span class="arrow">    ▼</span>
+<span class="node">aishell-gate-exec</span>  <span class="label">◄ confirmation + execution wrapper</span>
+<span class="arrow">    │</span>
+<span class="arrow">    ▼</span>
+<span class="node">execve()</span>  <span class="label">◄ operating system command execution</span></div>
+
+    <table class="data-table">
+      <thead><tr><th>Layer</th><th>Responsibility</th></tr></thead>
+      <tbody>
+        <tr><td>AI agent</td><td>Generate candidate actions</td></tr>
+        <tr><td>Planner</td><td>Structure those actions as a plan</td></tr>
+        <tr><td>aishell-gate-policy</td><td>Evaluate commands against deterministic policy</td></tr>
+        <tr><td>aishell-gate-exec</td><td>Handle confirmation and perform execution</td></tr>
+        <tr><td>Operating system</td><td>Run the validated command</td></tr>
+      </tbody>
+    </table>
+
+    <p>AIShell-Gate deliberately sits between the probabilistic layer and the deterministic layer. This boundary ensures that AI output is never executed directly, every command is evaluated by policy, unsafe commands are rejected before execution, and human confirmation can be required for risky actions.</p>
+
+    <p>The result is a controlled execution path:</p>
+
+    <div class="flow">
+      <span class="step">AI suggestion</span> <span class="arrow">→</span> <span class="step">policy evaluation</span> <span class="arrow">→</span> <span class="step">optional human confirmation</span> <span class="arrow">→</span> <span class="step">execution</span>
+    </div>
+
+    <p>rather than the far more common pattern:</p>
+
+    <div class="flow">
+      <span class="step">AI suggestion</span> <span class="arrow">→</span> <span class="step">direct shell execution</span>
+    </div>
+  </section>
+
+  <!-- ── 3 ── -->
+  <section id="what">
+    <h2><span class="section-num">03</span> What AIShell-Gate Is</h2>
+
+    <p>AIShell-Gate is a deterministic command validation engine. It evaluates a proposed shell command against a declared policy and returns exactly one of two decisions:</p>
+
+    <ul>
+      <li><strong>ALLOW</strong> — command is permitted (subject to a confirmation level).</li>
+      <li><strong>DENY</strong> — command is rejected; execution must not occur.</li>
+    </ul>
+
+    <p>Every ALLOW decision also carries a confirmation level:</p>
+
+    <table class="data-table">
+      <thead><tr><th>Level</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>none</td><td>No confirmation required; proceed immediately.</td></tr>
+        <tr><td>plan</td><td>Show the plan before executing; human review suggested.</td></tr>
+        <tr><td>action</td><td>Explicit per-command human approval required.</td></tr>
+        <tr><td>typed</td><td>Human must type a confirmation code derived from the validated command.</td></tr>
+      </tbody>
+    </table>
+
+    <p>Confirmation levels are declared by policy rules and escalated automatically by risk score. A command scoring above 40, 70, or 90 has its level raised to <code>plan</code>, <code>action</code>, or <code>typed</code> respectively, regardless of what the matching rule says. Levels are only ever raised, never lowered.</p>
+
+    <p>Risk scoring works in two steps. First, <code>risk_classify()</code> assigns a base score from a built-in command catalog — <code>ls</code> scores 0, <code>cp</code> scores 15, <code>rm</code> scores 80, <code>dd</code> and <code>mkfs</code> score 95 and 98 respectively. Modifiers are then added based on argument structure: +10 if a recursive flag is present on a destructive command, +10 if <code>--force</code> is combined with <code>rm</code> or <code>mv</code>, +15 if any argument targets a system path, +10 if <code>curl</code> or <code>wget</code> is called with a URL. The blast radius field is set from the same pass: <em>system</em> if a root or system path is targeted, <em>tree</em> if recursive, <em>single</em> otherwise. Second, <code>risk_apply_confirmation()</code> applies the score thresholds strictly monotonically — it can only raise the confirmation level, never lower it. Commands not in the catalog start at score 0 and confirmation <code>none</code>; they are handled by policy rules, not catalog scoring. All risk fields appear in the JSON output and the audit log so every confirmation escalation is traceable to its cause.</p>
+
+    <p>Beyond policy enforcement, this confirmation escalation mechanism functions as an operational interlock: higher-risk actions trigger progressively stronger confirmation requirements so that irreversible or high-blast-radius commands cannot pass from AI suggestion to execution without deliberate human review. The interlock is structural — it cannot be skipped by the executor, disabled by the AI agent, or overridden by a policy layer below the risk threshold.</p>
+
+    <p>AIShell-Gate does not execute commands. It does not attempt to interpret intent. It does not rely on AI to judge risk. It enforces declared rules in a transparent, deterministic way. It is a policy gate between AI output and Unix execution.</p>
+  </section>
+
+  <!-- ── 4 ── -->
+  <section id="architecture">
+    <h2><span class="section-num">04</span> Internal Architecture: Two Components, One Hard Boundary</h2>
+
+    <p>The implementation spans two C programs. Their separation is not a convenience — it is the core security property of the system. Conceptually, AIShell-Gate functions as a reference monitor for AI-generated shell commands: a small, trustworthy component that interposes between a subject (the AI agent) and an object (Unix command execution), enforcing complete mediation between probabilistic AI output and deterministic execution.<sup class="cite"><a href="#ref3">[3]</a></sup></p>
+
+    <table class="data-table">
+      <thead><tr><th>Reference Monitor Concept</th><th>AIShell-Gate Equivalent</th></tr></thead>
+      <tbody>
+        <tr><td>Subject</td><td>AI agent</td></tr>
+        <tr><td>Object</td><td>Unix command execution</td></tr>
+        <tr><td>Policy engine</td><td>aishell-gate-policy</td></tr>
+        <tr><td>Enforcement</td><td>aishell-gate-exec</td></tr>
+      </tbody>
+    </table>
+
+    <p>The separation between the policy engine and the executor also reflects the classic operating-systems distinction between policy and mechanism: the policy engine decides whether an action is permitted; the executor performs the action once permitted. Neither component reaches across that boundary.<sup class="cite"><a href="#ref4">[4]</a></sup></p>
+
+    <p><code>aishell-gate-policy</code> is the policy engine. It receives a proposed command, normalizes it, evaluates it against the loaded policy stack, computes a risk score, and emits a structured JSON decision. It has no ability to execute anything. It does not spawn processes. It does not open network connections. Its only output is the decision record.</p>
+
+    <p><code>aishell-gate-exec</code> is the executor. It accepts a JSON plan from an AI agent or caller, submits each action to the policy engine as a child process, reads the JSON evaluation response back over a pipe, collects human confirmation where required, and calls <code>execve()</code> with the validated argv from the response. Critically, it contains no policy logic whatsoever. It cannot approve or deny a command. Every execution decision is made by the policy engine in a separate process, across a hard OS process boundary.</p>
+
+    <p>That boundary matters. If the executor is compromised — through a bug, a malicious plan, or a hostile environment — it still cannot grant itself permission to run a command that the policy engine has denied, because permission is not a variable inside the executor. It is the output of an independent process that the executor has no ability to modify.</p>
+
+    <div class="diagram">
+<span class="node">AI Agent</span>
+<span class="arrow">    │</span>
+<span class="arrow">    ▼</span>  <span class="label">JSON plan { goal, source, strategy, actions: [ {cmd: ...}, ... ] }</span>
+<span class="node">aishell-gate-exec</span>
+<span class="label">    (no policy logic)</span>
+<span class="label">    forks policy engine as child process for each action</span>
+<span class="label">    reads JSON decision back over pipe</span>
+<span class="arrow">         │</span>
+<span class="arrow">         ▼</span>
+<span class="node">         aishell-gate-policy</span>  <span class="label">(policy engine, separate process)</span>
+<span class="sub">         normalise → match rules → risk score → JSON decision</span>
+<span class="sub">         exits; result returned over pipe only</span>
+<span class="arrow">         │</span>
+<span class="arrow">    ◄────┘</span>
+<span class="label">    collects human confirmation if required</span>
+<span class="arrow">    │</span>
+<span class="arrow">    ▼</span>
+<span class="node">execve(absolute_path, validated_argv, safe_environment)</span>
+<span class="label">(no shell, no PATH inheritance, no env injection)</span></div>
+
+    <div class="aside">
+      <strong>The specific security problem</strong>
+      Classic reference monitors protect users from other users. AIShell-Gate protects a deterministic system from a probabilistic agent. That is the specific security problem AI-to-Unix execution introduces, and it is the problem this architecture is designed to solve.
+    </div>
+  </section>
+
+  <!-- ── 5 ── -->
+  <section id="policy">
+    <h2><span class="section-num">05</span> Policy Layer Model</h2>
+
+    <p>Policy is not a single file. It is a stack of three layers applied in order: base, project, and user. Each layer can add rules, replace rule sets entirely, or restrict what earlier layers permitted. A deny at any layer is final — later layers cannot promote it back to allow.</p>
+
+    <p>The <strong>base layer</strong> is the organizational baseline. It defines the floor: what commands are never permitted regardless of context, which paths are always protected, and which network targets are always blocked. The built-in default base policy denies recursive deletions, writes to system paths, sudo, and access to cloud metadata endpoints (<code>169.254.169.254</code> and <code>metadata.google.internal</code>).</p>
+
+    <p>The <strong>project layer</strong> extends the base for a specific workflow. A git-focused project layer might allow <code>git status</code>, <code>git diff</code>, and test runners within the project directory without requiring confirmation, while still denying anything outside that scope.</p>
+
+    <p>The <strong>user layer</strong> adds personal preferences on top of the project layer — additional allowed commands, preferred confirmation thresholds, or personal directory permissions. It cannot expand beyond what the base and project layers permit.</p>
+
+    <p>Presets (<code>--policy-preset ops_safe</code>, <code>--policy-preset dev_sandbox</code>, etc.) are named configurations that replace the builtin layer's command allow/deny lists while preserving argument, path, and network rules. Each preset defines a complete <em>Execution Posture</em> — the full risk and permission profile for a specific workflow type. A preset is a starting posture; operators can then provide override files for any layer to tune it for their environment.</p>
+
+    <p>This model means that an organization can harden the base layer once and trust that no project or user configuration can undermine it. Policy is auditable at every layer: the JSON decision record names the layer that matched each action, so an audit trail always shows not just what was allowed or denied but which policy level made that call.</p>
+  </section>
+
+  <!-- ── 6 ── -->
+  <section id="usage">
+    <h2><span class="section-num">06</span> Intended Usage Model</h2>
+
+    <p>In normal use, an AI agent assembles a plan as a JSON document describing its goal, the source identity (the <code>source</code> field in the plan, an <em>Injected Source Identity</em> supplied by the agent itself), an execution strategy (<code>fail_fast</code> or <code>best_effort</code>), and the list of commands to run. For deployments requiring authoritative source attribution, the <code>--source</code> flag sets a <em>Declared Source Identity</em> at the CLI level that overrides any agent-supplied value — an agent cannot misrepresent itself as human when the deployer has declared the session as AI-sourced. That plan is passed to <code>aishell-gate-exec</code>, which handles evaluation, confirmation, and execution as a unit.</p>
+
+<pre><code><span class="cm">/* Example AI agent plan (input to aishell-gate-exec) */</span>
+{
+  "goal":     "update project dependencies and run tests",
+  "source":   "ai",
+  "strategy": "fail_fast",
+  "actions": [
+    { "type": "command", "cmd": "git pull"      },
+    { "type": "command", "cmd": "npm install"   },
+    { "type": "command", "cmd": "npm test"      }
+  ]
+}</code></pre>
+
+    <p>The executor submits each command to the policy engine in sequence. For each, it receives a JSON decision containing the overall allow/deny, the confirmation level, the matched rule and layer, the validated argv array, and the risk score. The executor never passes the raw command string to a shell. It passes only the validated argv directly to <code>execve()</code>.</p>
+
+    <p>The policy engine can also be called directly from the command line for single-command evaluation, scripting, or policy testing. The <code>--json</code> flag produces machine-readable output. The trace output (Input → Normalized → Matched Rule → Decision → Reason) makes every decision explainable without needing to inspect the policy files.</p>
+  
+
+    <p>As of v1.0, AIShell-Gate serves two distinct user populations simultaneously. <strong>AI agents</strong> submit JSON plans as described above. <strong>Human operators</strong> can run either binary interactively at a terminal. <code>aishell-gate-policy</code> interactive mode is a purely educational surface: it assesses commands, explains every flag with its documented reasoning, and emits a gateway echo line showing how to route the command through the executor. It never executes. <code>aishell-gate-exec</code> interactive mode is the execution surface: it enforces confirmation gates and runs commands with a full audit trail. A junior sysadmin can learn what any command does before running it. An experienced operator gets a disciplined daily workflow with gate enforcement and tamper-evident audit throughout.</p>
+</section>
+
+  <!-- ── 7 ── -->
+  <section id="examples">
+    <h2><span class="section-num">07</span> Example Decisions</h2>
+
+    <h3>Example 1: Denial</h3>
+    <p>AI proposes: <code>rm -rf /var/log/*</code></p>
+    <p><strong>Decision:</strong> DENY<br>
+    <strong>Reason:</strong> recursive deletion outside allowed paths<br>
+    <strong>Matched rule:</strong> block_recursive_system_paths<br>
+    No execution occurs.</p>
+
+    <h3>Example 2: Safe Operation</h3>
+    <p>AI proposes: <code>ls -la /home/user/project</code></p>
+    <p><strong>Decision:</strong> ALLOW<br>
+    <strong>Confirm:</strong> none<br>
+    <strong>Reason:</strong> read-only command within permitted directory<br>
+    Execution layer proceeds without human intervention.</p>
+
+    <h3>Example 3: High-Risk Operation</h3>
+    <p>AI proposes: <code>cp file.txt /etc/config/</code></p>
+    <p><strong>Decision:</strong> ALLOW<br>
+    <strong>Confirm:</strong> action<br>
+    <strong>Reason:</strong> write operation to protected path; explicit confirmation required<br>
+    The execution layer pauses and requires human approval.</p>
+  </section>
+
+  <!-- ── 8 ── -->
+  <section id="integration">
+    <h2><span class="section-num">08</span> Example of Full Integration</h2>
+
+    <p>The key discipline in any integration: the executor never receives the raw command string for shell evaluation. It reads the validated argv array from the policy engine's JSON output and passes it directly to <code>execve()</code>. This eliminates the entire class of injection vulnerabilities that shell evaluation introduces.</p>
+
+<pre><code><span class="cm">/* Pseudocode — conceptual integration flow */</span>
+result   = aishell_gate_policy("--json", "--policy-preset", "ops_safe", command)
+decision = result["overall_decision"]          <span class="cm">/* "allow" or "deny" */</span>
+confirm  = result["actions"][0]["confirm"]     <span class="cm">/* "none"|"plan"|"action"|"typed" */</span>
+argv     = result["actions"][0]["argv"]        <span class="cm">/* validated argument array */</span>
+
+if decision != "allow":
+    log("blocked: " + result["actions"][0]["reason"])
+    exit(1)
+
+if confirm == "typed":
+    phrase     = derive_challenge(argv)
+    user_input = prompt("Type to confirm: " + phrase)
+    if user_input != phrase: exit(1)
+elif confirm == "action":
+    if not prompt_yes_no("Approve: " + join(argv)): exit(1)
+
+execve(argv[0], argv, safe_environment)</code></pre>
+  </section>
+
+  <!-- ── 9 ── -->
+  <section id="not">
+    <h2><span class="section-num">09</span> What AIShell-Gate Is Not</h2>
+
+    <p>AIShell-Gate occupies a specific position in the security landscape and is not a substitute for adjacent mechanisms. Understanding where it sits matters for deployment decisions.</p>
+
+    <h3>It is not a sandbox — but it is sandbox-aware</h3>
+    <p>A sandbox constrains what a running process can do through kernel mechanisms such as seccomp, namespaces, chroot, or containers. AIShell-Gate operates before execution: it decides whether execution should begin at all. These approaches are complementary. The <code>--sandbox</code> flag accepts five modes — <code>none</code>, <code>cwd_jail</code>, <code>chroot</code>, <code>container</code>, <code>userns</code> — and the <code>--limit-cpu</code>, <code>--limit-as-mb</code>, and <code>--limit-wall-ms</code> flags carry resource budgets. These settings are advisory hints for a wrapping executor. The one active exception is <code>cwd_jail</code>: when a jail root is configured, the policy engine enforces path containment during evaluation. For the other sandbox modes, the policy engine records the intended mode in the JSON decision and audit log so that a wrapping executor can apply kernel enforcement accordingly.</p>
+
+    <h3>It is not sudoers — it operates on a different axis</h3>
+    <p><code>sudoers</code> answers one question: can this user run this command as this other user? It makes a binary identity-based decision at the command level. AIShell-Gate answers a different question: does this specific invocation — these arguments, this path, this network target, at this time, from this session context — satisfy declared policy? <code>sudoers</code> can permit <code>git</code> for a user; AIShell-Gate can permit <code>git status</code> and <code>git diff</code> at confirmation level <code>none</code>, require action confirmation for <code>git push</code>, and deny <code>git clone</code> from an external URL entirely — and can do this differently for SSH sessions vs. TTY sessions, for specific UIDs or GIDs, and within a declared time window. AIShell-Gate also maintains a tamper-evident audit chain of every decision, which <code>sudoers</code> does not. The two mechanisms can coexist.</p>
+
+    <h3>It is not a full intrusion prevention system</h3>
+    <p>An IPS inspects running traffic or system calls in real time and can block actions mid-execution. AIShell-Gate operates at the command level, before execution begins. It does not observe what a command does while running or intercept system calls.</p>
+
+    <h3>It is not a guarantee against malicious behavior</h3>
+    <p>A sufficiently determined attacker with access to the system can attempt to bypass any software policy layer. AIShell-Gate is hardened — it validates its own binary, refuses setuid operation, enforces the evaluation boundary, and produces a linked audit chain — but it is not a security proof. It raises the cost and visibility of unsafe AI-generated actions and ensures that every attempt is recorded.</p>
+  </section>
+
+  <!-- ── 10 ── -->
+  <section id="threatmodel">
+    <h2><span class="section-num">10</span> Threat Model</h2>
+
+    <p>AIShell-Gate addresses a specific and bounded threat: the execution of AI-generated shell commands in environments where Unix infrastructure is deterministic and changes may be irreversible. The threat model is stated explicitly so that operators can reason about what AIShell-Gate covers and what complementary controls are required. The policy enforcement point model follows the access control framework described in NIST SP 800-162.<sup class="cite"><a href="#ref5">[5]</a></sup></p>
+
+    <h3>Assumed Attacker and Environment</h3>
+    <p>AIShell-Gate assumes that the AI agent generating commands is probabilistic and may produce dangerous, incorrect, or adversarially influenced output. It does not assume the AI is malicious in the traditional sense — it assumes the AI can be wrong, manipulated through prompt injection,<sup class="cite"><a href="#ref6">[6]</a></sup> or directed toward a task whose full consequences it cannot evaluate. The threat is structural, not intentional.</p>
+
+    <table class="threat-table">
+      <thead><tr><th>Threat category</th><th>Example</th><th>AIShell-Gate response</th></tr></thead>
+      <tbody>
+        <tr><td>Dangerous command generation</td><td><code>rm -rf /</code>, <code>dd if=/dev/sda | nc …</code></td><td>DENY or CONFIRM_TYPED via catalog + arg rules</td></tr>
+        <tr><td>Shell metacharacter injection</td><td><code>git status; rm -rf ~</code></td><td>Rejected by <code>contains_shell_meta()</code> before tokenisation</td></tr>
+        <tr><td>Argument-level bypass</td><td><code>find . -exec rm -rf {} \;</code></td><td>Blocked by arg rules: <code>find -exec</code> denied</td></tr>
+        <tr><td>Interpreter bypass via env</td><td><code>env python3 -c 'import os; os.system("bash")'</code></td><td>Blocked by arg rules: <code>env python3</code> denied</td></tr>
+        <tr><td>Path traversal outside jail</td><td>Write to <code>/etc/cron.d/</code> via allowed command</td><td>Path rules deny writes to protected directories</td></tr>
+        <tr><td>Cron persistence without crontab</td><td>Direct write to <code>/var/spool/cron/</code></td><td>Path rule denies <code>/var/spool/cron/</code> explicitly</td></tr>
+        <tr><td>Kernel memory access</td><td>Read/write via <code>/proc/PID/mem</code> or <code>/proc/kcore</code></td><td>Path rules deny both entries explicitly</td></tr>
+        <tr><td>Self-Referential API Access (unaware)</td><td><code>curl localhost:11434/api/generate</code> during AI session</td><td>Port catalog + loopback detection; CONFIRM_ACTION — operator informed and approves or denies; see §11</td></tr>
+        <tr><td>Cloud metadata access</td><td><code>curl 169.254.169.254/latest/meta-data/</code></td><td>Net rules deny all cloud IMDS endpoints</td></tr>
+        <tr><td>Network tool as backdoor</td><td><code>nc -l 4444</code></td><td>Arg rules deny <code>nc -l</code> / <code>--listen</code></td></tr>
+        <tr><td>Audit trail falsification</td><td><code>make -t</code> to forge build timestamps</td><td>Flag catalog: <code>make -t</code> is FLAG_DANGER</td></tr>
+        <tr><td>Timestamp forgery</td><td><code>touch -t 202001010000 evidence.log</code></td><td>Flag catalog: <code>touch -t</code> is FLAG_WARN with forensic reason</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Explicit Scope Boundaries</h3>
+    <p><strong>In scope:</strong> AI-generated shell command evaluation, argument-level bypass attempts, path traversal within the execution environment, network target manipulation, AI self-referential API access, audit chain integrity.</p>
+
+    <p><strong>Out of scope:</strong> Kernel exploits and privilege escalation below the process level, network-layer attacks, physical access, vulnerabilities in the AI model itself, and compromise of the operator's terminal or confirmation channel. AIShell-Gate operates at command evaluation time; it does not monitor running processes or intercept system calls after execution begins.</p>
+
+    <div class="aside">
+      <strong>The core insight</strong>
+      Classic reference monitors protect deterministic systems from other deterministic actors. AIShell-Gate protects a deterministic system from a probabilistic one. The threat is not that an attacker controls the AI — the threat is that the AI's probabilistic nature is itself a risk surface when connected to irreversible infrastructure. As Gilley argues in the context of safety-first system design, the architecture of safety must precede the architecture of capability — safety constraints retrofitted to existing capability are structurally weaker than those that shaped the capability from the beginning.<sup class="cite"><a href="#ref10">[10]</a></sup>
+    </div>
+  </section>
+
+  <!-- ── 11 ── -->
+  <section id="selfcall">
+    <h2><span class="section-num">11</span> Model Sub-Delegation and Self-Referential API Access</h2>
+
+    <p>This section introduces two related concepts that this paper proposes as distinct, named entries in the AI security threat taxonomy.</p>
+
+    <p><strong>Model Sub-Delegation</strong> is the threat class when it occurs without awareness or explicit intent: an AI agent recruiting a second inference system — local or remote — to influence a policy decision that the original agent cannot influence directly, without the human operator knowing that a second model is involved in the decision. The concern is not the practice itself. A human operator who deliberately routes a command through a local model for a second opinion, adversarial testing, or ensemble reasoning is employing a sophisticated and potentially valuable strategy. The problem is when this occurs implicitly, inside a gated execution session, without the operator's knowledge — making the policy boundary's effective authority unclear.</p>
+
+    <p><strong>Self-Referential API Access</strong> is the mechanism: the agent issues shell commands that contact inference endpoints running on the same host or local network from within a gated execution session. An agent that can issue <code>curl localhost:11434/api/generate</code> can consult a local Ollama instance mid-execution — which may be exactly what an experienced operator intends, or may be an uncontrolled bypass of the policy boundary, depending entirely on whether the operator is aware it is happening.</p>
+
+    <p>AIShell-Gate's position on this is consistent with its broader design philosophy: the gate does not prohibit, it makes explicit. Self-Referential API Access to an AI inference endpoint during an AI-sourced session triggers a confirmation requirement — the human operator is informed and must approve. If the operator intended the sub-delegation, they approve and it proceeds. If they did not, the gate catches something they would want to know about. The typed confirmation challenge, displayed only on the operator's terminal, ensures that the approval is genuinely human regardless of what the AI agent can observe. This distinction — between delegating generation, which is acceptable, and delegating judgment, which is not — is the ethical boundary that the confirmation gate enforces.<sup class="cite"><a href="#ref10">[10]</a></sup> When an AI agent attempts to recruit a second model for a policy decision, it is attempting to delegate judgment to a system that cannot be held accountable for the consequences.</p>
+
+    <p>Model Sub-Delegation occurring through Self-Referential API Access — specifically the unaware or uncontrolled form — is a threat that did not exist before local inference became practical. It has no coverage in conventional security tooling, which is concerned with what commands an AI generates, not with whether the AI is consulting additional models during execution. It is related to but distinct from prompt injection<sup class="cite"><a href="#ref6">[6]</a></sup> — prompt injection operates at the language model input layer; Self-Referential API Access operates at the execution layer, using shell commands rather than crafted text to recruit a second model.</p>
+
+    <p>AIShell-Gate addresses this through a layered loopback and port-awareness system introduced in v1.01 and substantially expanded in v1.02.</p>
+
+    <h3>The Port Catalog</h3>
+    <p>Version 1.02 replaces the original 25-entry AI port table with a 108-entry <code>g_port_catalog[]</code> covering five categories:</p>
+
+    <table class="data-table">
+      <thead><tr><th>Category</th><th>Entries</th><th>Examples</th></tr></thead>
+      <tbody>
+        <tr><td>PORT_CAT_AI_INFERENCE</td><td>40</td><td>Ollama (11434), LM Studio (1234), llama.cpp (8080), Gradio (7860), Qdrant (6333), Chroma (8000), LocalAI, Jan.ai, Oobabooga, LiteLLM, AnythingLLM</td></tr>
+        <tr><td>PORT_CAT_WELL_KNOWN</td><td>32</td><td>SSH, SMTP, DNS, MySQL, PostgreSQL, Redis, MongoDB, Elasticsearch, Kafka</td></tr>
+        <tr><td>PORT_CAT_DANGEROUS</td><td>21</td><td>Telnet (23), rsh (514), Docker daemon unauthenticated (2375), Metasploit (4444), Memcached (11211), backdoor ports (31337, 12345)</td></tr>
+        <tr><td>PORT_CAT_CLOUD_META</td><td>3</td><td>AWS/GCP/Azure IMDS (169.254.169.254), AWS IPv6 IMDS (fd00:ec2::254), GCP alias</td></tr>
+        <tr><td>PORT_CAT_DEBUG</td><td>12</td><td>Node.js inspector (9229/9230), Tor control (9051), RDP (3389), Squid proxy (3128)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Warning and Escalation Logic</h3>
+    <p>Network target detection operates in priority order for every evaluated command:</p>
+
+    <table class="data-table">
+      <thead><tr><th>Condition</th><th>Response</th></tr></thead>
+      <tbody>
+        <tr><td>Cloud metadata host (any port)</td><td>CONFIRM_TYPED — always</td></tr>
+        <tr><td>PORT_RISK_DANGER port on any host</td><td>CONFIRM_TYPED — regardless of target</td></tr>
+        <tr><td>Loopback + AI inference port, source=ai</td><td>CONFIRM_ACTION minimum — human must approve</td></tr>
+        <tr><td>Loopback + PORT_RISK_DANGER port</td><td>CONFIRM_TYPED</td></tr>
+        <tr><td>Loopback + other known port</td><td>Named service note, no automatic escalation</td></tr>
+        <tr><td>Local alias (0.0.0.0, docker.internal)</td><td>Advisory note</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Why This Matters</h3>
+    <p>The confirmation challenge for a high-risk command is derived from the validated argv and displayed only on the human operator's terminal — it is never transmitted on the AI's communication channel. This means an AI agent cannot read the challenge and replay it. The human confirmation gate is structurally inaccessible to the model generating the command, regardless of what the model can see or say.</p>
+
+    <p><code>PORT_RISK_DANGER</code> ports escalate to <code>CONFIRM_TYPED</code> on any target host, not only loopback. An AI agent cannot route around the loopback restriction by aliasing to <code>0.0.0.0</code> or <code>host.docker.internal</code> — both are explicitly covered by the loopback detection logic. Cloud metadata endpoint detection fires independently of port, so a request to <code>169.254.169.254</code> on any port is caught regardless of what service it claims to address.</p>
+
+    <div class="aside">
+      <strong>The gate makes it explicit, not impossible</strong>
+      Every other AI safety tool is concerned with what an AI <em>says</em>. AIShell-Gate is also concerned with what an AI <em>calls</em>. Model Sub-Delegation through Self-Referential API Access is not inherently wrong — a human operator who deliberately routes execution decisions through a local model is employing a legitimate advanced strategy. The problem is when it happens without the operator's awareness. The confirmation requirement does not prohibit the practice; it ensures the operator knows it is occurring and consciously permits it. That distinction — between an informed decision and an invisible one — is the boundary AIShell-Gate enforces.
+    </div>
+  </section>
+
+  <!-- ── 12 ── -->
+  <section id="source">
+    <h2><span class="section-num">12</span> Source Code: Security in Practice</h2>
+
+    <p>The following excerpts are drawn from the AIShell-Gate policy engine and executor source (v1.02 beta). Each illustrates a specific, deliberate security decision embedded in the implementation. The pattern throughout: security properties are structural, not advisory. They are enforced in code, not described in documentation.</p>
+
+    <h3>12.1 Shell Metacharacter Rejection [aishell-gate-policy.c]</h3>
+    <p>Before tokenization, every input string passes through <code>contains_shell_meta()</code>. The function explicitly rejects every character class that could introduce shell injection — including the DEL byte (<code>0x7f</code>) added in v0.52 after fuzz testing<sup class="cite"><a href="#ref8">[8]</a></sup> exposed the gap. Quoting characters are rejected entirely. This is a deliberate design choice: implementing a shell grammar subset to handle quotes would introduce ambiguity that becomes a bypass surface. Any command containing a quote character is denied outright.</p>
+
+<pre><code><span class="cm">/* aishell-gate-policy.c — contains_shell_meta() */</span>
+static bool <span class="fn">contains_shell_meta</span>(const char *s) {
+    for (const unsigned char *p = (const unsigned char *)s; *p; p++) {
+        unsigned char c = *p;
+        <span class="cm">/* Reject all C0 controls except \t (0x09, treated as whitespace). */</span>
+        if (c < 0x20 && c != '\t') return true;
+        <span class="cm">/* DEL (0x7f) — not a C0 control but equally non-printable.       */</span>
+        <span class="cm">/* No legitimate shell command uses 0x7f. Reject before tokenize. */</span>
+        if (c == 0x7f) return true;
+        switch (c) {
+            case '|': case ';': case '&':
+            case '>': case '<': case '`':
+            case '"': case '\'': return true;
+        }
+    }
+    if (strstr(s, "$(") != NULL) return true;
+    if (strstr(s, "${") != NULL) return true;
+    if (strstr(s, "&&") != NULL) return true;
+    if (strstr(s, "||") != NULL) return true;
+    return false;
+}</code></pre>
+
+    <h3>12.2 Jail-Root Escape Prevention [aishell-gate-policy.c]</h3>
+    <p>A subtle prefix-matching bug allowed a path like <code>/tmp/jailbreak/x</code> to satisfy a jail root of <code>/tmp/jail</code> — the first nine bytes match, so a bare <code>strncmp</code> passes. The fix confirms that the character immediately following the matched prefix is either <code>'/'</code> or <code>'\0'</code>, establishing true directory containment.</p>
+
+<pre><code><span class="cm">/* aishell-gate-policy.c — jail containment check                      */</span>
+<span class="cm">/* v0.53 fix: strncmp prefix alone is insufficient.                    */</span>
+<span class="cm">/* If jail_root is "/tmp/jail", the path "/tmp/jailbreak/x" matches   */</span>
+<span class="cm">/* the first 9 bytes and incorrectly passes. The trailing character    */</span>
+<span class="cm">/* must be '\0' or '/' to confirm containment under jail_root.        */</span>
+if (strncmp(canon, jail_root, jl) != 0 ||
+    (canon[jl] != '\0' && canon[jl] != '/')) {
+    argv_free(&out.argv);
+    return deny_result("path is outside jail root");
+}</code></pre>
+
+    <h3>12.3 JSON Parse Loop Bounds Guard [aishell-gate-policy.c]</h3>
+    <p>All four rule-array parse loops previously relied on a sentinel token with <code>start == -1</code> at the end of the jsmn token array. When the array was exactly full, no sentinel existed and the loop read past the allocated buffer — a heap-buffer-overflow caught by AddressSanitizer<sup class="cite"><a href="#ref9">[9]</a></sup> during a v0.53 audit pass.</p>
+
+<pre><code><span class="cm">/* aishell-gate-policy.c — parse loop bounds (all four rule-array parsers) */</span>
+<span class="cm">/* `cur < g_tok_nt` guard: prevents heap overread when the token array  */</span>
+<span class="cm">/* is exactly full and no sentinel token exists at end of the buffer.  */</span>
+while (cur < g_tok_nt && toks[cur].start != -1
+       && toks[cur].start < endpos)
+    cur++;</code></pre>
+
+    <h3>12.4 Policy Key Allowlist [aishell-gate-policy.c]</h3>
+    <p>Unknown root keys in a policy file previously produced a silent no-op. A typo like <code>"cmd_denny"</code> was accepted without error and the intended rule never fired — a particularly dangerous failure mode because the operator believed they had a protection that did not exist. <code>validate_root_keys()</code> now rejects any key not on a 13-key allowlist, naming the offending key in the error.</p>
+
+<pre><code><span class="cm">/* aishell-gate-policy.c — validate_root_keys() */</span>
+static const char * const known_keys[] = {
+    "session",
+    "cmd_allow",  "cmd_allow_replace",
+    "cmd_deny",   "cmd_deny_replace",
+    "arg_rules",  "arg_rules_replace",
+    "path_rules", "path_rules_replace",
+    "net_rules",  "net_rules_replace",
+    "writable_dirs", "writable_dirs_replace",
+    NULL
+};
+<span class="cm">/* Any key not on this list fails with a named error — not a silent no-op. */</span>
+if (!found) return false; <span class="cm">/* unknown key — fail closed */</span></code></pre>
+
+    <h3>12.5 Atomic Policy Apply [aishell-gate-policy.c]</h3>
+    <p>Policy files are applied section-by-section. A failure midway through previously left the running policy in a half-written state. <code>policy_layer_snapshot()</code> takes a deep copy of the entire layer before any modification; any parse failure triggers <code>policy_layer_restore()</code>, returning the layer to its exact prior state. A failed config load has zero effect on the running policy.</p>
+
+<pre><code><span class="cm">/* aishell-gate-policy.c — policy_layer_snapshot/restore */</span>
+<span class="cm">/* Take a full deep-copy before touching the layer.                     */</span>
+<span class="cm">/* Any failure restores L to its original state — fail-closed.         */</span>
+PolicyLayerDyn snap;
+if (!policy_layer_snapshot(L, &snap)) {
+    set_err(err, "out of memory during policy snapshot");
+    return false;
+}
+if (!parse_override_file(js, toks, nt, L, path, err)) {
+    policy_layer_restore(L, &snap); <span class="cm">/* zero effect on running policy */</span>
+    return false;
+}</code></pre>
+
+    <h3>12.6 Compile-Time Safe PATH and Environment Allowlist [aishell-gate-exec.c]</h3>
+    <p>The executor never inherits the caller's PATH or environment. A compile-time directory list defines all searchable binary locations, and only an explicitly enumerated set of environment variables is propagated to executed commands. The approach is an allowlist, not a denylist: any variable not named is dropped, including all dynamic-linker and interpreter injection vectors. PATH itself is reconstructed from the compile-time list — it is never read from the environment.</p>
+
+<pre><code><span class="cm">/* aishell-gate-exec.c — SAFE_PATH and ENV_ALLOWLIST */</span>
+<span class="cm">/* Fixed at compile time: a manipulated $PATH cannot redirect execution. */</span>
+static const char *const SAFE_PATH[] = {
+    "/usr/local/bin", "/usr/bin", "/bin",
+    "/usr/sbin", "/sbin", NULL
+};
+<span class="cm">/* Allowlist: any variable absent is silently dropped, including        */</span>
+<span class="cm">/* LD_PRELOAD, DYLD_INSERT_LIBRARIES, PYTHONPATH, GIT_EXEC_PATH.       */</span>
+static const char *const ENV_ALLOWLIST[] = {
+    "HOME", "USER", "LOGNAME", "TERM", "COLORTERM",
+    "LANG", "LC_ALL", "LC_CTYPE", "TZ", "TMPDIR", NULL
+};</code></pre>
+
+    <h3>12.7 Pre-Execution Security Self-Check [aishell-gate-exec.c]</h3>
+    <p>Before any policy evaluation begins, <code>check_execution_security()</code> validates the executor's own runtime posture. It refuses to continue if the process was elevated via setuid or setgid bits. It also rejects a binary that is writable by group or others. Both checks are written to the audit log before exit.</p>
+
+<pre><code><span class="cm">/* aishell-gate-exec.c — check_execution_security() */</span>
+<span class="cm">/* Check 1: refuse to run setuid or setgid. */</span>
+uid_t ruid = getuid(), euid = geteuid();
+if (ruid != euid) {
+    fprintf(stderr, "[gate-exec] SECURITY: refusing to run setuid\n");
+    ok = false;
+}
+<span class="cm">/* Check 2: binary not writable by group or others.               */</span>
+<span class="cm">/* A writable binary can be replaced to bypass the policy engine. */</span>
+if (st.st_mode & (S_IWGRP | S_IWOTH)) {
+    fprintf(stderr, "[gate-exec] SECURITY: binary is writable — fix: chmod go-w\n");
+    ok = false;
+}</code></pre>
+
+    <h3>12.8 Response Stream Cap with SIGKILL [aishell-gate-exec.c]</h3>
+    <p><code>slurp_timed()</code> reads the policy engine response under two independent constraints: a wall-clock timeout and a configurable byte cap. When either limit is reached, the child receives <code>SIGKILL</code> — not <code>SIGTERM</code> — because <code>SIGKILL</code> cannot be caught, blocked, or ignored. Buffer growth is also capped at <code>max_bytes + 4096</code> so <code>realloc()</code> cannot exhaust memory before the kill fires.</p>
+
+<pre><code><span class="cm">/* aishell-gate-exec.c — slurp_timed() byte-cap enforcement */</span>
+if (total >= max_bytes) {
+    fprintf(stderr, "[gate-exec] policy engine response exceeded %zu bytes — ",
+            max_bytes);
+    fprintf(stderr, "sending SIGKILL\n");
+    <span class="cm">/* SIGKILL cannot be caught, blocked, or ignored — unlike SIGTERM. */</span>
+    kill(kill_pid, SIGKILL);
+    int ws = 0; waitpid(kill_pid, &ws, 0);
+    free(buf); return NULL;
+}
+<span class="cm">/* Buffer growth capped so realloc() cannot exhaust memory before kill. */</span>
+size_t new_cap = (cap < max_bytes) ? cap * 2 : max_bytes + 4096;</code></pre>
+
+    <h3>12.9 Audit JSON Field Escaping [aishell-gate-exec.c]</h3>
+    <p>User-controlled strings — the plan source field, policy version, layer names — are passed through <code>audit_json_str()</code> before being embedded in audit log entries. Without this, a malicious source field could inject arbitrary JSON into the audit chain, corrupting records or forging entries.</p>
+
+<pre><code><span class="cm">/* aishell-gate-exec.c — audit_json_str() injection prevention          */</span>
+<span class="cm">/* User-supplied input (source, layer, policy_version) could previously */</span>
+<span class="cm">/* inject arbitrary JSON into audit entries. All external fields are    */</span>
+<span class="cm">/* passed through audit_json_str() before use in snprintf format strings.*/</span>
+char esc_source[512], esc_layer[256], esc_version[256];
+audit_json_str(esc_source,  sizeof esc_source,  plan->source);
+audit_json_str(esc_layer,   sizeof esc_layer,   action->layer);
+audit_json_str(esc_version, sizeof esc_version, policy_version);
+snprintf(buf, sizeof buf,
+    "{\"source\":\"%s\",\"layer\":\"%s\"}",
+    esc_source, esc_layer);</code></pre>
+
+    <h3>12.10 Interpreter Bypass via env [aishell-gate-policy.c]</h3>
+    <p><code>env</code> is an allowed command. Without explicit arg rules, an AI agent could invoke <code>env python3</code>, <code>env bash</code>, or any other interpreter via <code>env</code>, routing around a command-level deny for those interpreters entirely. The base arg rules table was expanded with eight explicit deny entries: <code>env bash</code>, <code>env sh</code>, <code>env dash</code>, <code>env zsh</code>, <code>env python</code>, <code>env python3</code>, <code>env perl</code>, and <code>env node</code>. The documented residual: <code>env VAR=x bash</code> with interleaved variable assignments is not caught by arg_glob matching and requires a path_rules or project-layer rule if that form is a concern in a given deployment.</p>
+
+    <h3>12.11 find -exec and find -delete as Command-Level Bypass [aishell-gate-policy.c]</h3>
+    <p><code>find</code> is commonly allowed as a read-oriented filesystem search tool. Two flag combinations convert it into an execution primitive: <code>find -delete</code> achieves recursive deletion of matched files without invoking <code>rm</code>, routing around the <code>rm</code> command-level deny. <code>find -exec</code> and <code>find -execdir</code> chain arbitrary commands against every matched path, routing around command-level denies for the chained command entirely. Both are blocked by arg rules in the base policy; the distinction from the <code>rm</code> deny is that these bypass vectors operate on the <code>find</code> command, which is itself allowed.</p>
+
+    <h3>12.12 /proc Kernel Exposure and /var/spool/cron Persistence Path [aishell-gate-policy.c]</h3>
+    <p><code>/proc/PID/mem</code> allows read and write access to any running process's virtual address space, bypassing all filesystem ACLs — it is the primary mechanism for credential extraction from running processes. <code>/proc/kcore</code> exposes the full kernel address space as an ELF core image. Neither was covered by the original path rule set. Both are now explicitly denied. Separately, <code>/var/spool/cron/</code> allows establishing cron persistence by writing directly to the cron spool without invoking <code>crontab</code>, routing around the <code>crontab</code> command-level deny. An explicit path deny for <code>/var/spool/cron/</code> closes this vector independently of the command rules.</p>
+
+    <h3>12.13 Audit Chain-State Update Outside the flock Critical Section [aishell-gate-policy.c]</h3>
+    <p>In <code>audit_append_jsonl()</code>, the chain state variables <code>g_prev_hash</code> and <code>g_audit_seq</code> were updated after <code>flock(LOCK_UN)</code> and <code>close(fd)</code> — outside the exclusive lock. Under concurrent evaluation, two policy processes could write audit entries with the same sequence number and matching previous-hash value, producing a chain that verifies correctly per-entry but contains duplicate sequence numbers at the race site. The fix updates both state variables while the exclusive lock is still held, immediately after the write loop completes and before <code>flock(LOCK_UN)</code> — matching the implementation in the executor binary.</p>
+
+    <h3>12.14 make -t: Audit Trail Falsification [aishell-gate-policy.c]</h3>
+    <p><code>make -t</code> (touch mode) updates file timestamps without executing any build commands. In an audited environment this creates a record that files were built at a particular time when no build occurred, allowing an actor to backdate build artifacts or conceal that a build step was skipped. This is a distinct threat category from data destruction or privilege escalation: the risk is evidence manipulation. <code>make -t</code> is catalogued as <code>FLAG_DANGER</code> with the reason <code>"touch mode updates timestamps without executing commands — creates misleading audit trail about what was built when."</code></p>
+  </section>
+
+  <!-- ── 13 ── -->
+  <section id="principles">
+    <h2><span class="section-num">13</span> Design Principles</h2>
+
+    <p>AIShell-Gate is intentionally simple: fail closed, deterministic rule evaluation, human-readable reasoning, minimal external dependencies, transparent C implementation, no hidden AI inference. Both source files embed JSMN, a minimal MIT-licensed JSON tokenizer, verbatim rather than linking an external library. This eliminates a supply-chain dependency: a build-system or package-manager attack cannot substitute a malicious parser.</p>
+
+    <p>A governing design principle throughout is <em>Epistemic Honesty</em>: the system never implies it evaluated something and found it safe when it did not. An unknown flag produces a <code>FLAG_UNKNOWN</code> output explicitly labelled "risk unassessed, not evaluated as safe." Unknown root keys in a policy file are rejected with a named error rather than silently ignored. A failed policy load produces an explicit error rather than a silent fallback. Epistemic Honesty is closely related to the open design principle of Saltzer and Schroeder<sup class="cite"><a href="#ref4">[4]</a></sup> — security mechanisms should not depend on obscurity, and their behaviour should be fully visible and explainable to the operator. It also reflects the observation that trust emerges from inspectability: a system that explains its reasoning is safer than one that merely performs well, because the explanation supports the oversight that catches what performance alone cannot guarantee.<sup class="cite"><a href="#ref10">[10]</a></sup></p>
+
+    <p>A related principle governs the design of enforcement rules: a control that can be bypassed by a sufficiently unusual input is not a control — it is a preference, and preferences do not hold under adversarial conditions or at scale.<sup class="cite"><a href="#ref10">[10]</a></sup> This is the argument behind Zero-Effect Fail-Closed design and the layered arg rules that close bypass vectors independently of the command-level deny rules they complement.</p>
+
+    <p>The goal is not intelligence. The goal is clarity. In environments where AI generates actions, clarity is more important than cleverness. An operator should be able to read a policy file, understand exactly what it permits and denies, and trust that the engine applies it literally — not probabilistically.</p>
+
+    <p>The executor-separation principle follows from this directly: the policy engine validates, the executor acts. The boundary between them is the JSON decision record, which is structured, logged, and auditable. Neither component reaches across that boundary.</p>
+
+    <div class="aside">
+      <strong>Design Constraints</strong>
+      AIShell-Gate is intentionally constrained by several principles drawn from practical Unix usage. The system must remain deterministic, simple enough to audit, compatible with shell pipelines, and capable of falling back to explicit human confirmation for risky actions. These constraints intentionally exclude more complex approaches such as AI-based risk evaluation or heuristic command interpretation. The goal is not to build an intelligent system, but a predictable boundary that integrates cleanly into existing Unix workflows. It is this deliberate simplicity — not sophistication — that makes the boundary trustworthy.
+    </div>
+  </section>
+
+  <!-- ── 14 ── -->
+  <section id="who">
+    <h2><span class="section-num">14</span> Who Needs This</h2>
+
+    <p>AIShell-Gate is intended for environments where AI systems generate or propose shell commands that may affect real infrastructure, data, or operational workflows. It is most useful in situations where organizations want to benefit from AI-assisted operations without allowing probabilistic systems to directly control deterministic infrastructure.</p>
+
+    <h3>AI-Assisted DevOps Teams</h3>
+    <p>Modern development teams increasingly use coding assistants that can suggest shell commands or propose multi-step workflows — dependency updates, build system repairs, log inspection, test execution, repository maintenance. Without a policy layer, the typical workflow is: AI suggests command → developer copy/pastes → command executes. This introduces risk: incorrect flags, incorrect paths, destructive commands suggested during debugging, accidental system modification outside the project directory.</p>
+
+    <p>With AIShell-Gate the workflow becomes:</p>
+    <div class="flow">
+      <span class="step">AI proposes command</span> <span class="arrow">→</span> <span class="step">policy evaluates</span> <span class="arrow">→</span> <span class="step">executor runs validated argv</span>
+    </div>
+
+    <table class="data-table">
+      <thead><tr><th>Command</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr><td>git status</td><td>ALLOW — no confirmation</td></tr>
+        <tr><td>npm test</td><td>ALLOW — no confirmation</td></tr>
+        <tr><td>rm -rf node_modules</td><td>ALLOW — confirmation required</td></tr>
+        <tr><td>rm -rf /</td><td>DENY</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Organizations Running Autonomous or Semi-Autonomous Agents</h3>
+    <p>Some organizations are beginning to deploy autonomous agents that perform operational tasks: infrastructure maintenance, dependency management, repository triage, automated diagnostics, CI/CD repair. These agents may generate shell commands dynamically based on system state. AIShell-Gate provides a policy enforcement boundary that prevents an agent from executing actions outside defined operational limits.</p>
+
+    <div class="diagram">
+<span class="node">AI Agent</span>
+<span class="arrow">    │</span>  <span class="label">JSON plan</span>
+<span class="arrow">    ▼</span>
+<span class="node">aishell-gate-exec</span>
+<span class="arrow">    │</span>
+<span class="arrow">    ▼</span>
+<span class="node">aishell-gate-policy</span>  <span class="label">(policy decision)</span>
+<span class="arrow">    │</span>
+<span class="arrow">    ▼</span>
+<span class="node">execve(validated argv)</span></div>
+
+    <p>This model ensures every command is validated, destructive actions require confirmation, forbidden operations never execute, and all decisions are recorded in the audit log.</p>
+
+    <h3>Security-Conscious Infrastructure Teams</h3>
+    <p>Security teams are increasingly concerned about the introduction of AI into operational environments. The core concern is simple: AI systems produce probabilistic output, while infrastructure requires deterministic control. AIShell-Gate introduces a deterministic policy layer that enforces allowed command sets, allowed argument patterns, path restrictions, network target restrictions, session policy constraints, and confirmation escalation based on risk.</p>
+
+    <p>In practice: <code>dd</code> or <code>mkfs</code> commands automatically receive risk scores of 95–98 and require typed confirmation. Recursive deletion of system paths is denied outright. Writes to protected directories require explicit human approval. Every decision is recorded in a tamper-evident audit chain.</p>
+
+    <h3>Controlled Remote AI Execution Environments</h3>
+    <p>Some organizations want to allow external AI systems to interact with internal infrastructure through a controlled interface. AIShell-Gate enables a model where the AI never receives direct shell access. Instead the AI submits structured execution requests; the executor evaluates each command through the policy engine before execution; and only the validated argv returned by the policy engine is ever passed to <code>execve()</code>. This prevents shell injection, environment inheritance, and arbitrary command execution.</p>
+
+    <h3>Engineering Teams Building AI-Driven Toolchains</h3>
+    <p>AIShell-Gate is also useful as a building block for larger systems: AI-powered developer environments, automated incident response tools, infrastructure maintenance agents, experimental AI operations platforms. Because the policy engine and executor are separate processes, the system can be embedded into larger architectures while maintaining the policy boundary. AIShell-Gate acts as the decision engine; surrounding systems provide orchestration, monitoring, sandboxing, network controls, and authentication.</p>
+
+    <div class="aside">
+      <strong>In short</strong>
+      AIShell-Gate is designed for organizations that want to experiment with AI-driven automation, safely introduce AI into Unix environments, maintain deterministic control over system execution, and enforce policy boundaries around AI-generated commands. It enables a practical middle ground between two extremes: unrestricted AI shell access and no AI integration at all. AIShell-Gate allows AI systems to participate in operational workflows while ensuring that policy, not probability, determines what actually runs.
+    </div>
+  </section>
+
+  <!-- ── 15 ── -->
+  <section id="features">
+    <h2><span class="section-num">15</span> Current Implementation Features</h2>
+    <p style="font-family:'IBM Plex Mono',monospace; font-size:0.75rem; color:var(--text-dim);">aishell-gate-policy 1.02 beta &nbsp;·&nbsp; aishell-gate-exec 0.36.0</p>
+
+    <p><strong>Structured JSON Decision Channel.</strong> The policy engine produces machine-readable JSON describing session metadata and per-action decisions. The executor consumes JSON only and does not parse human-readable text.</p>
+
+    <p><strong>Deterministic Execution Pipeline.</strong> The executor spawns the policy engine directly and controls the full evaluation → decision → execution pipeline. No external plan input bypasses this flow.</p>
+
+    <p><strong>Absolute Path Resolution.</strong> Executable binaries are resolved against a controlled <code>SAFE_PATH</code> list and executed via <code>execve()</code> using absolute paths. <code>PATH</code> is never inherited from the caller's environment.</p>
+
+    <p><strong>Hardened Execution Environment.</strong> The executor constructs an allowlisted environment from scratch. Any variable absent from the allowlist — including <code>LD_PRELOAD</code>, <code>DYLD_INSERT_LIBRARIES</code>, <code>PYTHONPATH</code>, and <code>GIT_EXEC_PATH</code> — is silently dropped.</p>
+
+    <p><strong>Evaluation Timeout and Response Size Cap.</strong> Policy engine evaluation is time-bounded. The executor enforces a configurable byte cap on the policy engine response stream; when exceeded the child is <code>SIGKILL</code>'d before the deadline fires, preventing OOM exhaustion.</p>
+
+    <p><strong>Typed Confirmation Challenge (Command-Coded Confirmation).</strong> Destructive or high-risk actions require a confirmation challenge derived from the validated command — the response is computed from the specific argv being approved, not a generic acknowledgement. The challenge is displayed only on the human operator's terminal and is never exposed to the AI's communication channel.</p>
+
+    <p><strong>Zero-Effect Fail-Closed Design.</strong> Any parse failure, malformed JSON, policy ambiguity, or execution resolution failure results in denial. A failed policy config load has zero effect on the running policy state due to atomic snapshot/restore semantics — not only does the system deny, it leaves active policy entirely unchanged. This is a stronger guarantee than standard fail-closed design, which specifies denial on failure but not the integrity of running state.</p>
+
+    <p><strong>Tamper-Evident Audit Chain.</strong> Each audit entry is SHA-256 hashed and linked to the previous entry, forming a verifiable append-only chain. HMAC-SHA256 mode (<code>--audit-key</code>) restricts verification to key-holders. Concurrent writes are protected by advisory file locking.</p>
+
+    <p><strong>Pre-execution Security Self-Check.</strong> The executor validates its own runtime state before proceeding: refuses setuid/setgid, detects writable-binary conditions, and logs violations to the audit trail.</p>
+
+    <p><strong>Embedded JSON Tokenizer.</strong> Both components embed JSMN verbatim, eliminating a supply-chain dependency on an external parsing library.</p>
+
+    <p><strong>Model Sub-Delegation Detection via Self-Referential API Access Gating.</strong> A 108-entry port catalog (40 AI inference endpoints, 21 inherently dangerous ports, 32 well-known services, 3 cloud metadata endpoints, 12 debug ports) identifies network targets in evaluated commands. Self-Referential API Access — loopback connections to AI inference ports — automatically escalates to <code>CONFIRM_ACTION</code> minimum when <code>source=ai</code>, preventing Model Sub-Delegation through this vector without human approval. Dangerous ports escalate to <code>CONFIRM_TYPED</code> on any target host. Cloud metadata endpoints are denied regardless of port. See §11.</p>
+
+    <p><strong>Argument-Level Bypass Coverage.</strong> The base arg rule table covers 40 flag-level attack vectors, including: interpreter bypass via <code>env</code>, recursive deletion via <code>find -delete</code>, arbitrary execution via <code>find -exec</code>, persistent tunnel creation via <code>ssh -L/-R/-D/-w</code>, raw device read via <code>dd if=/dev/...</code>, and backdoor listener via <code>nc -l</code>.</p>
+  </section>
+
+  <!-- ── 16 ── -->
+  <section id="audit">
+    <h2><span class="section-num">16</span> Audit and Accountability</h2>
+
+    <p>Every evaluation can be written to a tamper-evident JSON Lines audit log (<code>--audit-log</code>). Each record carries a monotonic sequence number, session identifier, full decision context, and a SHA-256 hash linking it to the preceding record. A gap in sequence numbers or a hash mismatch identifies deleted or altered entries.</p>
+
+    <p>For environments requiring authenticated audit trails, <code>--audit-key</code> upgrades the chain to HMAC-SHA256. Only a holder of the 64-byte key can forge valid chain hashes. The chain can be verified at any time with <code>--audit-verify</code> without interrupting production operation.</p>
+
+    <p>This provides a lightweight, dependency-free audit record suitable for compliance review, incident reconstruction, and policy tuning.</p>
+  </section>
+
+  <!-- ── 17 ── -->
+  <section id="status">
+    <h2><span class="section-num">17</span> Status</h2>
+
+    <p>AIShell-Gate 1.02 is a beta release. The architecture is stable and has been in iterative development and hardening since the initial prototype. The policy model, execution gateway, audit chain, and loopback detection system are all functional. Access is currently by arrangement while final pre-release validation is completed. Feedback from practitioners introducing AI into Unix workflows is welcomed and actively shapes the roadmap.</p>
+
+    <p>Security inquiries and deployment questions: <a href="https://www.aishellgate.com" style="color:var(--accent);">www.aishellgate.com</a> &nbsp;·&nbsp; <a href="https://www.aishell.org" style="color:var(--accent);">www.aishell.org</a></p>
+
+    <div class="aside">
+      <strong>Closing thought</strong>
+      Trust in AI systems cannot be achieved by attempting to make probabilistic models perfectly reliable. Trust emerges from architecture: deterministic boundaries that govern how AI-generated actions interact with real systems. AIShell-Gate represents one such boundary — a policy layer that converts probabilistic suggestions into controlled, auditable system operations.
+
+      As AI systems increasingly interact with infrastructure, databases, networks, and operational tooling, similar execution boundaries will likely become a necessary architectural component. AIShell-Gate demonstrates how such a boundary can be implemented for Unix command execution: simple, deterministic, and auditable.
+
+      AI systems are capable of generating powerful commands. Power without policy is risk. AIShell-Gate exists to make the boundary explicit.
+    </div>
+  </section>
+
+  <!-- ── Glossary ── -->
+  <section id="glossary">
+    <h2><span class="section-num">18</span> Terminology Glossary</h2>
+
+    <p>The following terms are introduced or formally defined in this paper. Several fill gaps in existing security vocabulary where the concepts are genuinely novel or where existing terms are insufficiently precise for the AI execution context.</p>
+
+    <div class="glossary-entry">
+      <div class="glossary-term">Model Sub-Delegation <span class="term-cat">Threat Class</span></div>
+      <p class="glossary-def">The act of an AI agent recruiting a second inference system — local or remote — to influence a policy decision from within a gated execution session, without the human operator's knowledge or explicit approval. Model Sub-Delegation is not inherently prohibited; the concern is specifically the unaware form, where a second model participates in an execution decision invisibly. The mechanism by which this most commonly occurs in local AI deployments is Self-Referential API Access.</p>
+      <div class="glossary-ref">Introduced §11 · Related: Self-Referential API Access</div>
+    </div>
+
+    <div class="glossary-entry">
+      <div class="glossary-term">Self-Referential API Access <span class="term-cat">Mechanism</span></div>
+      <p class="glossary-def">The specific vector by which Model Sub-Delegation is attempted: an AI agent issues shell commands that contact inference endpoints — its own API, or another model's API — from within a gated execution session. Example: <code>curl localhost:11434/api/generate</code> issued by an AI agent during a policy-gated session. AIShell-Gate detects Self-Referential API Access through a 108-entry port catalog and requires explicit human confirmation before the command executes, converting an invisible action into a conscious operator decision.</p>
+      <div class="glossary-ref">Introduced §11 · Related: Model Sub-Delegation, Port Catalog</div>
+    </div>
+
+    <div class="glossary-entry">
+      <div class="glossary-term">Command-Coded Confirmation <span class="term-cat">Security Mechanism</span></div>
+      <p class="glossary-def">A confirmation challenge whose response string is computed from the validated argument vector of the specific command requiring approval. Because the challenge is derived from the argv, it cannot be pre-computed, replayed for a different command, or satisfied by a generic approval. The challenge is displayed only on the human operator's terminal and is never transmitted on the AI agent's communication channel, making it structurally inaccessible to the model generating the command. This is the <code>CONFIRM_TYPED</code> confirmation level in AIShell-Gate.</p>
+      <div class="glossary-ref">See §3, §15 · Implementation: <code>CONFIRM_TYPED</code></div>
+    </div>
+
+    <div class="glossary-entry">
+      <div class="glossary-term">Zero-Effect Fail-Closed <span class="term-cat">Design Property</span></div>
+      <p class="glossary-def">A stronger form of the standard fail-closed design principle. In standard fail-closed design, a failure results in denial. In Zero-Effect Fail-Closed design, a failure results in denial <em>and</em> leaves the running system state entirely unchanged — no partial writes, no degraded policy, no intermediate state. In AIShell-Gate, a failed policy configuration load triggers atomic restoration of the prior policy state via snapshot/restore semantics, so a bad config file has zero effect on the currently active policy.</p>
+      <div class="glossary-ref">See §12.5 · Implementation: <code>policy_layer_snapshot/restore</code></div>
+    </div>
+
+    <div class="glossary-entry">
+      <div class="glossary-term">Declared Source Identity <span class="term-cat">Session Attribute</span></div>
+      <p class="glossary-def">A session source identity set by the deployer or operator via a command-line flag (<code>--source ai</code> or <code>--source human</code>). Declared Source Identity is authoritative — it reflects a deliberate deployment decision rather than a claim made by the agent itself. Policy surfaces that activate based on source identity, including AI inference port escalation and audit attribution, treat the declared value as ground truth for the session.</p>
+      <div class="glossary-ref">See §6, §11 · Implementation: <code>--source</code> flag · Related: Injected Source Identity</div>
+    </div>
+
+    <div class="glossary-entry">
+      <div class="glossary-term">Injected Source Identity <span class="term-cat">Session Attribute</span></div>
+      <p class="glossary-def">A source identity claim supplied by the AI agent itself within the JSON plan (<code>"source": "ai"</code> or <code>"source": "human"</code>). Injected Source Identity is advisory and potentially adversarial — an agent that identifies itself as <code>human</code> in its plan is making an unverifiable claim. Deployments with strong source identity requirements should use Declared Source Identity via CLI flag rather than relying on agent-supplied values. The distinction between declared and injected source is a security property that policy authors should reason about explicitly.</p>
+      <div class="glossary-ref">See §6 · Implementation: JSON plan <code>source</code> field · Related: Declared Source Identity</div>
+    </div>
+
+    <div class="glossary-entry">
+      <div class="glossary-term">Epistemic Honesty <span class="term-cat">Design Principle</span></div>
+      <p class="glossary-def">The design principle that the system never implies it evaluated something and found it safe when it did not. In AIShell-Gate, an unknown flag produces a <code>FLAG_UNKNOWN</code> output explicitly labelled "risk unassessed, not evaluated as safe" rather than a silent pass or an implicit allow. Unknown root keys in a policy file are rejected with a named error rather than silently ignored. A failed policy load produces an explicit error rather than a silent fallback to a permissive state. Epistemic Honesty distinguishes AIShell-Gate from tools that treat the absence of a denial as an implicit safety determination.</p>
+      <div class="glossary-ref">See §13 (Design Principles) · Related: Zero-Effect Fail-Closed, Default Deny</div>
+    </div>
+
+    <div class="glossary-entry">
+      <div class="glossary-term">Execution Posture <span class="term-cat">Concept · see also: Policy Preset</span></div>
+      <p class="glossary-def">The complete risk and permission profile governing an AIShell-Gate session, encompassing the allowed command set, confirmation floors, path constraints, network rules, and source identity handling. An Execution Posture is the expression of an organisation's intent for a specific workflow type: what actions are permitted, what requires human review, and what is denied regardless of context. AIShell-Gate implements Execution Postures as named Policy Presets (<code>ops_safe</code>, <code>dev_sandbox</code>, <code>ci_build</code>, <code>ci_deploy</code>, <code>ci_admin</code>, <code>read_only</code>, <code>danger_zone</code>). "Execution Posture" is the conceptual term; "Policy Preset" is the implementation term.</p>
+      <div class="glossary-ref">See §5, §6, §15 · Implementation: <code>--policy-preset</code> flag · Related: Policy Preset</div>
+    </div>
+
+  </section>
+
+  <!-- ── References ── -->
+  <section id="references">
+    <h2><span class="section-num">19</span> References</h2>
+
+    <ul class="ref-list">
+
+      <li>
+        <span class="ref-num" id="ref1">[1]</span>
+        <span class="ref-body">
+          Amodei, D., Olah, C., Steinhardt, J., Christiano, P., Schulman, J., and Mané, D.
+          <em>"Concrete Problems in AI Safety."</em>
+          arXiv:1606.06565, 2016.
+          <a href="https://arxiv.org/abs/1606.06565">arxiv.org/abs/1606.06565</a>
+          — Frames the structural gap between AI optimisation targets and human intent in operational environments; directly motivating the probabilistic/deterministic mismatch addressed by AIShell-Gate.
+        </span>
+      </li>
+
+      <li>
+        <span class="ref-num" id="ref2">[2]</span>
+        <span class="ref-body">
+          Russell, S.
+          <em>Human Compatible: Artificial Intelligence and the Problem of Control.</em>
+          Viking, 2019. ISBN 978-0525558613.
+          — Provides the broader context for why architectural boundaries, rather than model reliability alone, are the appropriate mechanism for AI safety in operational settings.
+        </span>
+      </li>
+
+      <li>
+        <span class="ref-num" id="ref3">[3]</span>
+        <span class="ref-body">
+          Anderson, J. P.
+          <em>"Computer Security Technology Planning Study."</em>
+          Technical Report ESD-TR-73-51, Air Force Electronic Systems Division, 1972.
+          — Original formulation of the reference monitor concept: a trustworthy component that interposes between subjects and objects, enforcing complete mediation. AIShell-Gate adapts this model to the AI agent / Unix execution boundary.
+        </span>
+      </li>
+
+      <li>
+        <span class="ref-num" id="ref4">[4]</span>
+        <span class="ref-body">
+          Saltzer, J. H. and Schroeder, M. D.
+          <em>"The Protection of Information in Computer Systems."</em>
+          Proceedings of the IEEE, 63(9):1278–1308, 1975.
+          — Defines the eight design principles for secure systems, including separation of policy and mechanism (directly reflected in the two-binary architecture) and open design (the foundation of Epistemic Honesty as applied here).
+        </span>
+      </li>
+
+      <li>
+        <span class="ref-num" id="ref5">[5]</span>
+        <span class="ref-body">
+          Hu, V. C., et al.
+          <em>"Guide to Attribute Based Access Control (ABAC) Definition and Considerations."</em>
+          NIST Special Publication 800-162, National Institute of Standards and Technology, 2014.
+          <a href="https://doi.org/10.6028/NIST.SP.800-162">doi.org/10.6028/NIST.SP.800-162</a>
+          — Defines the policy enforcement point model and policy decision point separation that frames the AIShell-Gate threat model and architecture.
+        </span>
+      </li>
+
+      <li>
+        <span class="ref-num" id="ref6">[6]</span>
+        <span class="ref-body">
+          Greshake, K., Abdelnabi, S., Mishra, S., Endres, C., Holz, T., and Fritz, M.
+          <em>"Not What You've Signed Up For: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injections."</em>
+          arXiv:2302.12173, 2023.
+          <a href="https://arxiv.org/abs/2302.12173">arxiv.org/abs/2302.12173</a>
+          — Characterises prompt injection as an attack on the language model input layer. Self-Referential API Access is a related but distinct vector: it operates at the execution layer, using shell commands to recruit a second model rather than crafted text to manipulate a single model's output.
+        </span>
+      </li>
+
+      <li>
+        <span class="ref-num" id="ref7">[7]</span>
+        <span class="ref-body">
+          NIST.
+          <em>"Artificial Intelligence Risk Management Framework (AI RMF 1.0)."</em>
+          NIST AI 100-1, National Institute of Standards and Technology, 2023.
+          <a href="https://doi.org/10.6028/NIST.AI.100-1">doi.org/10.6028/NIST.AI.100-1</a>
+          — Establishes the governance context for AI risk management in operational deployments; the Execution Posture concept in AIShell-Gate maps directly to the AI RMF's organisational profile and risk tier constructs.
+        </span>
+      </li>
+
+      <li>
+        <span class="ref-num" id="ref8">[8]</span>
+        <span class="ref-body">
+          Miller, B. P., Fredriksen, L., and So, B.
+          <em>"An Empirical Study of the Reliability of UNIX Utilities."</em>
+          Communications of the ACM, 33(12):32–44, 1990.
+          — Foundational fuzz testing methodology applied to Unix command-line tools; the fuzz testing pass that discovered the DEL byte (0x7f) gap in AIShell-Gate follows the input-space exploration approach described here.
+        </span>
+      </li>
+
+      <li>
+        <span class="ref-num" id="ref9">[9]</span>
+        <span class="ref-body">
+          Serebryany, K., Bruening, D., Potapenko, A., and Vyukov, D.
+          <em>"AddressSanitizer: A Fast Address Sanity Checker."</em>
+          USENIX Annual Technical Conference (ATC), 2012.
+          <a href="https://www.usenix.org/conference/atc12/technical-sessions/presentation/serebryany">usenix.org/conference/atc12</a>
+          — AddressSanitizer is the tool that identified the heap-buffer-overflow in the JSON parse loop bounds guard (§12.3) during the v0.53 audit pass.
+        </span>
+      </li>
+
+      <li>
+        <span class="ref-num" id="ref10">[10]</span>
+        <span class="ref-body">
+          Gilley, S. T.
+          <em>The Shape of Intent: Steering Artificial Intelligence in Cognitive Collaboration.</em>
+          AIShell Labs LLC, Winston-Salem NC, 2026. Version 2.2.
+          <a href="https://www.aishell.org">www.aishell.org</a>
+          — Develops the cognitive engineering framework for human–AI collaboration, including the Constraint-First pattern (§12), the Safety-First Systems architecture principles (§21), and the ethics of co-design (§24). Three principles from this work inform AIShell-Gate's design directly: that the architecture of safety must precede the architecture of capability; that delegating generation to AI is acceptable while delegating judgment is not; and that trust emerges from inspectability rather than from performance alone.
+        </span>
+      </li>
+
+    </ul>
+  </section>
+
+  <!-- ── Footer ── -->
+  <footer class="doc-footer">
+    <div class="footer-copyright">Copyright &copy; 2026 AIShell Labs LLC Winston-Salem NC USA. All Rights Reserved. &mdash; <a href="https://www.aishellgate.com" style="color:var(--accent);text-decoration:none;">www.aishellgate.com</a> &nbsp;·&nbsp; <a href="https://www.aishell.org" style="color:var(--accent);text-decoration:none;">www.aishell.org</a></div>
+    <div class="footer-body">
+      <p>This document is proprietary to AIShell Labs LLC and is distributed subject to license. A valid license is required for production use of the software. See the License Notice in the software source for full terms.</p>
+      <p>This document is provided for informational purposes only and does not constitute legal, security, compliance, or operational advice. Shell commands and AI-driven automation carry inherent risk, including the possibility of irreversible data loss. You are solely responsible for evaluating the suitability of any approach described herein for your environment.</p>
+      <p>AIShell Labs LLC makes no warranty, express or implied, regarding the accuracy or completeness of this document. To the maximum extent permitted by applicable law, AIShell Labs LLC shall not be liable for any damages arising from reliance on this document or use of the software described herein.</p>
+      <p style="margin-top:0.8rem;">Sean T. Gilley is the author of <em>The Shape of Intent: Steering Artificial Intelligence in Cognitive Collaboration</em>.</p>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>
