@@ -3,29 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AIShell-Gate — A Validation Layer for AI-to-Unix Execution (White Paper v13)</title>
+<title>AIShell-Gate — A Validation Layer for AI-to-Unix Execution (White Paper v15)</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap');
 
   :root {
-    --bg:           #0f1117;
-    --bg-panel:     #161b25;
-    --bg-code:      #0a0d12;
-    --bg-note:      #0e1a2a;
-    --bg-aside:     #141210;
-    --border:       #2a3040;
+    --bg:           #f8f9fb;
+    --bg-panel:     #eef1f6;
+    --bg-code:      #e8ecf2;
+    --bg-note:      #e8f0fa;
+    --bg-aside:     #f5f0ea;
+    --border:       #c8cdd8;
     --border-acc:   #3a6ea8;
-    --border-aside: #6a4e2a;
-    --text:         #c8cdd6;
-    --text-dim:     #6b7485;
-    --text-head:    #e8eaf0;
-    --text-aside:   #b8a898;
-    --accent:       #4a9eda;
-    --accent2:      #7ec8a0;
-    --accent3:      #e0a060;
-    --code-kw:      #7ec8a0;
-    --code-com:     #5a6880;
-    --rule:         #2a3a50;
+    --border-aside: #b08050;
+    --text:         #1a1e28;
+    --text-dim:     #5a6275;
+    --text-head:    #0f1218;
+    --text-aside:   #5a4830;
+    --accent:       #1a6ea8;
+    --accent2:      #2a8a60;
+    --accent3:      #c07820;
+    --code-kw:      #2a8a60;
+    --code-com:     #7a8898;
+    --rule:         #c0cad8;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -172,10 +172,10 @@
 <div class="page">
 
   <header class="masthead">
-    <div class="eyebrow">AIShell-Gate — White Paper &nbsp;·&nbsp; v13</div>
+    <div class="eyebrow">AIShell-Gate — White Paper &nbsp;·&nbsp; v15</div>
     <h1>A Validation Layer for<br>AI-to-Unix Execution</h1>
     <p class="subtitle">AIShell-Gate as an AI Execution Gateway: a deterministic policy layer mediating between probabilistic AI systems and deterministic infrastructure.</p>
-    <p class="subtitle" style="margin-top:0.4rem; font-size:0.72rem; font-family:'IBM Plex Mono',monospace; letter-spacing:0.06em; color:var(--text-dim);">aishell-gate-policy 1.02 beta &nbsp;·&nbsp; aishell-gate-exec 0.36.0</p>
+    <p class="subtitle" style="margin-top:0.4rem; font-size:0.72rem; font-family:'IBM Plex Mono',monospace; letter-spacing:0.06em; color:var(--text-dim);">aishell-gate-policy 1.09 &nbsp;·&nbsp; aishell-gate-exec 0.42.0 &nbsp;·&nbsp; aishell-gate-mcp 1.0</p>
     <p class="author">
       Sean T. Gilley &nbsp;·&nbsp; AIShell Labs LLC &nbsp;·&nbsp; Winston-Salem NC USA<br>
       <a href="https://www.aishellgate.com">www.aishellgate.com</a> &nbsp;·&nbsp; <a href="https://www.aishell.org">www.aishell.org</a>
@@ -191,7 +191,7 @@
 
   <div class="abstract">
     <div class="abstract-label">Abstract</div>
-    <p>Large language models are increasingly used to generate Unix shell commands in operational and development environments. Their output is probabilistic; Unix execution is deterministic and irreversible. This structural mismatch creates a missing layer between AI suggestion and system execution. AIShell-Gate addresses that gap with a deterministic policy engine and execution gateway implemented in portable C with no external dependencies. Every proposed command is evaluated against a configurable, layered policy before execution; the policy engine and executor are separated into distinct processes across a hard OS boundary so that neither can subvert the other. The system enforces argument-level access controls, path restrictions, network target rules, and risk-scored confirmation escalation, and produces a tamper-evident HMAC-SHA256 audit chain of every decision. A novel threat class addressed by version 1.02 is <em>Model Sub-Delegation</em> — an AI agent consulting a second inference system to influence a policy decision without the operator's knowledge. The specific mechanism is <em>Self-Referential API Access</em>: the agent contacts local inference endpoints from within a gated execution session. The practice is not inherently prohibited; AIShell-Gate's gate ensures the operator is aware it is occurring and explicitly approves it, converting an invisible action into a conscious decision. The architecture is intended to occupy the specific gap between unrestricted AI shell access and no AI integration at all, providing a practical, auditable execution boundary for organizations introducing AI into Unix workflows. This paper introduces a formal glossary of terminology coined for the AI execution security domain, including <em>Model Sub-Delegation</em>, <em>Self-Referential API Access</em>, <em>Command-Coded Confirmation</em>, <em>Zero-Effect Fail-Closed</em>, <em>Declared and Injected Source Identity</em>, <em>Epistemic Honesty</em>, and <em>Execution Posture</em>. See §18.</p>
+    <p>Large language models are increasingly used to generate Unix shell commands in operational and development environments. Their output is probabilistic; Unix execution is deterministic and irreversible. This structural mismatch creates a missing layer between AI suggestion and system execution. AIShell-Gate addresses that gap with a deterministic policy engine and execution gateway implemented in portable C with no external dependencies. Every proposed command is evaluated against a configurable, layered policy before execution; the policy engine and executor are separated into distinct processes across a hard OS boundary so that neither can subvert the other. The system enforces argument-level access controls, path restrictions, network target rules, and risk-scored confirmation escalation, and produces a tamper-evident HMAC-SHA256 audit chain of every decision. AIShell-Gate serves two distinct user populations from a single unified policy engine: AI agents submitting JSON execution plans, and human operators working interactively at a terminal. The same gate, the same policy, and the same audit chain apply to both. For human operators, the system functions simultaneously as a safety net, a teaching tool — every flag assessment carries documented reasoning explaining <em>why</em> a command is categorized as it is, not merely <em>what</em> the decision is — and a disciplined workflow enforcing confirmation gates and audit trail on operator-generated commands. A novel threat class addressed by version 1.02 is <em>Model Sub-Delegation</em> — an AI agent consulting a second inference system to influence a policy decision without the operator's knowledge. The specific mechanism is <em>Self-Referential API Access</em>: the agent contacts local inference endpoints from within a gated execution session. The practice is not inherently prohibited; AIShell-Gate's gate ensures the operator is aware it is occurring and explicitly approves it, converting an invisible action into a conscious decision. The architecture is intended to occupy the specific gap between unrestricted AI shell access and no AI integration at all, providing a practical, auditable execution boundary for organizations introducing AI into Unix workflows. Version 1.02 introduces an MCP (Model Context Protocol) server — <em>aishell-gate-mcp</em> — that exposes two tools to AI coding environments such as Claude Code and Cursor: <em>evaluate_plan</em> for policy-gated plan inspection without execution, and <em>execute_plan</em> for live execution. Every MCP tool response includes a protocol version block, making the full wire interface versioned and forward-compatible. The flag catalog has expanded to 2,088 entries covering ansible, ansible-playbook, az (Azure CLI), extended kubectl, terraform, and helm flags, kernel operations (insmod, kexec, rmmod), disk partitioning tools, debugfs, socat, nftables, and the full LVM suite. Network policy enforcement has been formalized: <em>net_default_deny</em> — decoupled from command default-deny — requires explicit allow rules for any detected network target in ops_safe, read_only, and dev_sandbox presets, while CI presets allow unrestricted network access for package registry and artifact store access. New operator tools include <code>--dry-run-json</code>, which produces a machine-readable JSON document describing what a plan would execute without executing it, and <code>--test-plan</code>, a policy testing mode that evaluates a JSON file of test cases against the active policy and reports PASS/FAIL, suitable for committing alongside policy files and running in CI. This paper introduces a formal glossary of terminology coined for the AI execution security domain, including <em>Model Sub-Delegation</em>, <em>Self-Referential API Access</em>, <em>Command-Coded Confirmation</em>, <em>Zero-Effect Fail-Closed</em>, <em>Declared and Injected Source Identity</em>, <em>Epistemic Honesty</em>, <em>Execution Posture</em>, <em>Net Default-Deny</em>, and <em>Broker Seam</em>. See §18.</p>
   </div>
 
   <nav class="toc" aria-label="Table of contents">
@@ -213,6 +213,8 @@
       <li><a href="#who">Who Needs This</a></li>
       <li><a href="#features">Current Implementation Features</a></li>
       <li><a href="#audit">Audit and Accountability</a></li>
+      <li><a href="#mcp">MCP Integration</a></li>
+      <li><a href="#mcp">MCP Integration</a></li>
       <li><a href="#status">Status</a></li>
       <li><a href="#glossary">Terminology Glossary</a></li>
       <li><a href="#references">References</a></li>
@@ -241,28 +243,30 @@
     <p>AIShell-Gate is not an AI system and not a shell. It is a policy boundary between AI-generated commands and Unix execution.</p>
 
     <div class="diagram">
-<span class="node">AI Agent</span>
-<span class="arrow">    │</span>  <span class="label">proposes actions</span>
-<span class="arrow">    ▼</span>
-<span class="node">Execution Planner</span>  <span class="label">(JSON plan describing commands)</span>
-<span class="arrow">    │</span>
-<span class="arrow">    ▼</span>
-<span class="node">aishell-gate-policy</span>  <span class="label">◄ deterministic policy evaluation</span>
-<span class="arrow">    │</span>  <span class="label">ALLOW / DENY decision</span>
-<span class="arrow">    ▼</span>
-<span class="node">aishell-gate-exec</span>  <span class="label">◄ confirmation + execution wrapper</span>
-<span class="arrow">    │</span>
-<span class="arrow">    ▼</span>
-<span class="node">execve()</span>  <span class="label">◄ operating system command execution</span></div>
+<span class="node">AI Agent (Claude Code / Cursor)</span>                <span class="node">AI Agent (direct)</span>        <span class="node">Human Operator</span>
+<span class="arrow">    │  MCP tool call</span>                                 <span class="arrow">│  JSON plan</span>                   <span class="arrow">│  interactive</span>
+<span class="arrow">    ▼</span>                                                 <span class="arrow">▼</span>                             <span class="arrow">▼</span>
+<span class="node">aishell-gate-mcp</span>  <span class="label">◄ MCP server (stdio)</span>     <span class="node">aishell-gate-exec</span>  <span class="label">◄ confirmation + execution wrapper</span>
+<span class="label">    evaluate_plan / execute_plan</span>                    <span class="arrow">│</span>
+<span class="arrow">    │  builds JSON plan envelope</span>                     <span class="arrow">│</span>
+<span class="arrow">    └─────────────────────────────────────────────────┘</span>
+<span class="arrow">                          │</span>  <span class="label">JSON plan { protocol, goal, source, strategy, actions }</span>
+<span class="arrow">                          ▼</span>
+<span class="node">                 aishell-gate-policy</span>  <span class="label">◄ deterministic policy evaluation</span>
+<span class="label">                 normalise → match rules → risk score → JSON decision</span>
+<span class="arrow">                          │</span>  <span class="label">ALLOW / DENY · confirm level · risk score</span>
+<span class="arrow">                          ▼</span>
+<span class="node">                 execve(absolute_path, validated_argv, safe_environment)</span>
+<span class="label">                 (no shell · no PATH inheritance · no env injection)</span></div>
 
     <table class="data-table">
       <thead><tr><th>Layer</th><th>Responsibility</th></tr></thead>
       <tbody>
         <tr><td>AI agent</td><td>Generate candidate actions</td></tr>
-        <tr><td>Planner</td><td>Structure those actions as a plan</td></tr>
-        <tr><td>aishell-gate-policy</td><td>Evaluate commands against deterministic policy</td></tr>
-        <tr><td>aishell-gate-exec</td><td>Handle confirmation and perform execution</td></tr>
-        <tr><td>Operating system</td><td>Run the validated command</td></tr>
+        <tr><td>aishell-gate-mcp</td><td>MCP server — translates tool calls to JSON plan envelopes; exposes evaluate_plan and execute_plan tools to Claude Code, Cursor, and compatible environments</td></tr>
+        <tr><td>aishell-gate-exec</td><td>Handle confirmation and perform execution; submit each action to the policy engine over a hard OS boundary</td></tr>
+        <tr><td>aishell-gate-policy</td><td>Evaluate commands against deterministic policy; never executes anything</td></tr>
+        <tr><td>Operating system</td><td>Run the validated command via execve()</td></tr>
       </tbody>
     </table>
 
@@ -379,16 +383,24 @@
     <p>Presets (<code>--policy-preset ops_safe</code>, <code>--policy-preset dev_sandbox</code>, etc.) are named configurations that replace the builtin layer's command allow/deny lists while preserving argument, path, and network rules. Each preset defines a complete <em>Execution Posture</em> — the full risk and permission profile for a specific workflow type. A preset is a starting posture; operators can then provide override files for any layer to tune it for their environment.</p>
 
     <p>This model means that an organization can harden the base layer once and trust that no project or user configuration can undermine it. Policy is auditable at every layer: the JSON decision record names the layer that matched each action, so an audit trail always shows not just what was allowed or denied but which policy level made that call.</p>
+
+    <h3>Network Default-Deny (<code>net_default_deny</code>)</h3>
+    <p>Network policy enforcement is governed by a separate flag — <code>net_default_deny</code> — decoupled from the command default-deny gate. When true (the default for <code>ops_safe</code>, <code>read_only</code>, and <code>dev_sandbox</code> presets), any command with a detected network target — a URL, <code>host:port</code> argument, or parseable address — must have an explicit <code>net_rules</code> allow entry for every target. Targets with no matching allow rule are denied, mirroring the command policy model: unknown is denied, not warned. CI presets (<code>ci_build</code>, <code>ci_deploy</code>, <code>ci_admin</code>) set <code>net_default_deny</code> to false, recognising that build pipelines legitimately access package registries, artifact stores, and deployment endpoints that cannot be enumerated in advance. The flag can be set in any policy override file, allowing operators to configure network posture per project. This decoupling is intentional: a CI pipeline may need unrestricted network access while still enforcing the full command allow-list (which remains governed by the unchanged command default-deny).</p>
+
+    <p>The built-in network deny rules (cloud metadata endpoints, IPv6 loopback, CGNAT/Tailscale range) remain unconditional regardless of <code>net_default_deny</code>. No allow rule in any policy layer can override them.</p>
   </section>
 
   <!-- ── 6 ── -->
   <section id="usage">
     <h2><span class="section-num">06</span> Intended Usage Model</h2>
 
-    <p>In normal use, an AI agent assembles a plan as a JSON document describing its goal, the source identity (the <code>source</code> field in the plan, an <em>Injected Source Identity</em> supplied by the agent itself), an execution strategy (<code>fail_fast</code> or <code>best_effort</code>), and the list of commands to run. For deployments requiring authoritative source attribution, the <code>--source</code> flag sets a <em>Declared Source Identity</em> at the CLI level that overrides any agent-supplied value — an agent cannot misrepresent itself as human when the deployer has declared the session as AI-sourced. That plan is passed to <code>aishell-gate-exec</code>, which handles evaluation, confirmation, and execution as a unit.</p>
+    <p>In normal use, an AI agent assembles a plan as a JSON document describing its goal, the source identity (the <code>source</code> field in the plan, an <em>Injected Source Identity</em> supplied by the agent itself), an execution strategy (<code>fail_fast</code> or <code>best_effort</code>), and the list of commands to run. For deployments requiring authoritative source attribution, the <code>--source</code> flag sets a <em>Declared Source Identity</em> at the CLI level that overrides any agent-supplied value — an agent cannot misrepresent itself as human when the deployer has declared the session as AI-sourced. That plan is passed to <code>aishell-gate-exec</code>, which handles evaluation, confirmation, and execution as a unit. The plan envelope carries a protocol version block — <code>"protocol": {"name": "aishell-gate-exec-input", "version": "1.0"}</code> — identifying the interface version so that future schema changes can be detected rather than silently misinterpreted.</p>
+
+    <p>AI agents using Claude Code, Cursor, or any MCP-compatible environment can interact with AIShell-Gate through <code>aishell-gate-mcp</code> without constructing envelopes manually. The agent calls <code>evaluate_plan</code> to inspect a plan without executing it, then calls <code>execute_plan</code> to commit. The MCP server handles envelope construction, protocol versioning, and result parsing. See §17.</p>
 
 <pre><code><span class="cm">/* Example AI agent plan (input to aishell-gate-exec) */</span>
 {
+  "protocol": { "name": "aishell-gate-exec-input", "version": "1.0" },
   "goal":     "update project dependencies and run tests",
   "source":   "ai",
   "strategy": "fail_fast",
@@ -404,7 +416,7 @@
     <p>The policy engine can also be called directly from the command line for single-command evaluation, scripting, or policy testing. The <code>--json</code> flag produces machine-readable output. The trace output (Input → Normalized → Matched Rule → Decision → Reason) makes every decision explainable without needing to inspect the policy files.</p>
   
 
-    <p>As of v1.0, AIShell-Gate serves two distinct user populations simultaneously. <strong>AI agents</strong> submit JSON plans as described above. <strong>Human operators</strong> can run either binary interactively at a terminal. <code>aishell-gate-policy</code> interactive mode is a purely educational surface: it assesses commands, explains every flag with its documented reasoning, and emits a gateway echo line showing how to route the command through the executor. It never executes. <code>aishell-gate-exec</code> interactive mode is the execution surface: it enforces confirmation gates and runs commands with a full audit trail. A junior sysadmin can learn what any command does before running it. An experienced operator gets a disciplined daily workflow with gate enforcement and tamper-evident audit throughout.</p>
+    <p>As of v1.0, AIShell-Gate serves two distinct user populations simultaneously. <strong>AI agents</strong> submit JSON plans as described above. <strong>Human operators</strong> can run either binary interactively at a terminal. <code>aishell-gate-policy</code> interactive mode is a purely educational surface: it assesses commands, explains every flag with its documented reasoning, and emits a gateway echo line showing how to route the command through the executor. It never executes. <code>aishell-gate-exec</code> interactive mode is the execution surface: it enforces confirmation gates and runs commands with a full audit trail. For the human operator, AIShell-Gate functions simultaneously as a safety net — catching dangerous commands before execution regardless of who typed them — a teaching tool — the 2,088-entry flag catalog delivers documented reasoning on why each flag raises risk, at the point of use, in plain language — and a disciplined workflow providing compliance-grade audit accountability for human shell activity. A junior operator who types an unfamiliar flag learns not just that it was flagged, but specifically why. An experienced operator gets a disciplined daily workflow with gate enforcement and tamper-evident audit throughout. Both populations operate under the same policy file with no additional configuration.</p>
 </section>
 
   <!-- ── 7 ── -->
@@ -576,7 +588,7 @@ execve(argv[0], argv, safe_environment)</code></pre>
   <section id="source">
     <h2><span class="section-num">12</span> Source Code: Security in Practice</h2>
 
-    <p>The following excerpts are drawn from the AIShell-Gate policy engine and executor source (v1.02 beta). Each illustrates a specific, deliberate security decision embedded in the implementation. The pattern throughout: security properties are structural, not advisory. They are enforced in code, not described in documentation.</p>
+    <p>The following excerpts are drawn from the AIShell-Gate policy engine and executor source (v1.02 beta, policy 1.09 / exec 0.42.0). Each illustrates a specific, deliberate security decision embedded in the implementation. The pattern throughout: security properties are structural, not advisory. They are enforced in code, not described in documentation.</p>
 
     <h3>12.1 Shell Metacharacter Rejection [aishell-gate-policy.c]</h3>
     <p>Before tokenization, every input string passes through <code>contains_shell_meta()</code>. The function explicitly rejects every character class that could introduce shell injection — including the DEL byte (<code>0x7f</code>) added in v0.52 after fuzz testing<sup class="cite"><a href="#ref8">[8]</a></sup> exposed the gap. Quoting characters are rejected entirely. This is a deliberate design choice: implementing a shell grammar subset to handle quotes would introduce ambiguity that becomes a bypass surface. Any command containing a quote character is denied outright.</p>
@@ -628,7 +640,7 @@ while (cur < g_tok_nt && toks[cur].start != -1
     cur++;</code></pre>
 
     <h3>12.4 Policy Key Allowlist [aishell-gate-policy.c]</h3>
-    <p>Unknown root keys in a policy file previously produced a silent no-op. A typo like <code>"cmd_denny"</code> was accepted without error and the intended rule never fired — a particularly dangerous failure mode because the operator believed they had a protection that did not exist. <code>validate_root_keys()</code> now rejects any key not on a 13-key allowlist, naming the offending key in the error.</p>
+    <p>Unknown root keys in a policy file previously produced a silent no-op. A typo like <code>"cmd_denny"</code> was accepted without error and the intended rule never fired — a particularly dangerous failure mode because the operator believed they had a protection that did not exist. <code>validate_root_keys()</code> now rejects any key not on a 14-key allowlist, naming the offending key in the error. The allowlist includes <code>net_default_deny</code>, allowing policy files to configure the network enforcement model per project.</p>
 
 <pre><code><span class="cm">/* aishell-gate-policy.c — validate_root_keys() */</span>
 static const char * const known_keys[] = {
@@ -639,6 +651,7 @@ static const char * const known_keys[] = {
     "path_rules", "path_rules_replace",
     "net_rules",  "net_rules_replace",
     "writable_dirs", "writable_dirs_replace",
+    "net_default_deny",  <span class="cm">/* stack-level bool — true=deny unknown net targets */</span>
     NULL
 };
 <span class="cm">/* Any key not on this list fails with a named error — not a silent no-op. */</span>
@@ -812,16 +825,31 @@ snprintf(buf, sizeof buf,
     <h3>Engineering Teams Building AI-Driven Toolchains</h3>
     <p>AIShell-Gate is also useful as a building block for larger systems: AI-powered developer environments, automated incident response tools, infrastructure maintenance agents, experimental AI operations platforms. Because the policy engine and executor are separate processes, the system can be embedded into larger architectures while maintaining the policy boundary. AIShell-Gate acts as the decision engine; surrounding systems provide orchestration, monitoring, sandboxing, network controls, and authentication.</p>
 
+    <h3>Human Operators — Safety Net, Teaching Tool, and Disciplined Workflow</h3>
+    <p>AIShell-Gate is not exclusively an AI safety tool. The same policy engine, the same confirmation gates, and the same audit chain apply equally when a human operator types commands interactively at a terminal. This is not a secondary use case — it is a distinct user population served simultaneously by the same binary with no additional configuration.</p>
+
+    <p>For human operators, AIShell-Gate serves three functions at once:</p>
+
+    <p><strong>Safety net.</strong> Dangerous commands typed by a human are caught before execution by exactly the same rules that catch dangerous AI-generated commands. A tired operator at 2am during incident response who types <code>rm -rf /var/log/*</code> receives the same denial as an AI agent that proposes it. The gate does not discriminate by source.</p>
+
+    <p><strong>Teaching tool.</strong> Every flag assessment in the 2,088-entry flag catalog carries a documented reason explaining <em>why</em> the flag is categorized as it is — not merely what the decision is. A junior operator who types <code>sed -i file.txt</code> is told "in-place edit; writes back to source file." Someone who uses <code>touch -t</code> learns "timestamp forgery can backdate files to evade time-based audit trails." <code>dmesg -c</code> produces "clears the kernel ring buffer after reading — destroying evidence impedes forensic investigation." <code>make -t</code> is flagged as "touch mode updates timestamps without executing commands — creates misleading audit trail about what was built when."</p>
+
+    <p>This is not documentation that gets read separately. It is instruction delivered in context, at the moment of the command, naming the specific flag that triggered the concern and the specific risk it represents. The gate teaches the reasoning behind Unix security practice, not just the outcome. Equally, <code>FLAG_UNKNOWN</code> is explicitly labelled "risk unassessed, not evaluated as safe" — teaching the practitioner that unknown is not the same as safe. That epistemic distinction is a professional maturity lesson most people take years to learn.</p>
+
+    <p><strong>Disciplined workflow.</strong> Experienced operators gain confirmation gates and a tamper-evident audit trail on their own commands — not just on AI-generated ones. Every interactive command is assessed, every decision is logged, and high-risk operations require typed confirmation derived from the exact command being approved. This provides compliance-grade accountability for human shell activity without requiring any change to existing workflow.</p>
+
+    <p>The policy governing all three functions — AI agent, autonomous pipeline, human operator — is the same file, evaluated by the same engine. An organization that sets a base policy for AI agent safety automatically extends that policy to human operator sessions. There is no separate human-mode configuration.</p>
+
     <div class="aside">
       <strong>In short</strong>
-      AIShell-Gate is designed for organizations that want to experiment with AI-driven automation, safely introduce AI into Unix environments, maintain deterministic control over system execution, and enforce policy boundaries around AI-generated commands. It enables a practical middle ground between two extremes: unrestricted AI shell access and no AI integration at all. AIShell-Gate allows AI systems to participate in operational workflows while ensuring that policy, not probability, determines what actually runs.
+      AIShell-Gate serves two distinct user populations from a single unified policy engine: AI agents submitting structured execution plans, and human operators working interactively at a terminal. For AI agents it provides a deterministic policy boundary between probabilistic output and irreversible infrastructure. For human operators it provides a safety net, a teaching instrument, and a disciplined workflow with full audit accountability. Both populations are served by the same gate, the same policy, and the same audit chain — simultaneously, without additional configuration.
     </div>
   </section>
 
   <!-- ── 15 ── -->
   <section id="features">
     <h2><span class="section-num">15</span> Current Implementation Features</h2>
-    <p style="font-family:'IBM Plex Mono',monospace; font-size:0.75rem; color:var(--text-dim);">aishell-gate-policy 1.02 beta &nbsp;·&nbsp; aishell-gate-exec 0.36.0</p>
+    <p style="font-family:'IBM Plex Mono',monospace; font-size:0.75rem; color:var(--text-dim);">aishell-gate-policy 1.09 &nbsp;·&nbsp; aishell-gate-exec 0.42.0 &nbsp;·&nbsp; aishell-gate-mcp 1.0</p>
 
     <p><strong>Structured JSON Decision Channel.</strong> The policy engine produces machine-readable JSON describing session metadata and per-action decisions. The executor consumes JSON only and does not parse human-readable text.</p>
 
@@ -846,7 +874,18 @@ snprintf(buf, sizeof buf,
     <p><strong>Model Sub-Delegation Detection via Self-Referential API Access Gating.</strong> A 108-entry port catalog (40 AI inference endpoints, 21 inherently dangerous ports, 32 well-known services, 3 cloud metadata endpoints, 12 debug ports) identifies network targets in evaluated commands. Self-Referential API Access — loopback connections to AI inference ports — automatically escalates to <code>CONFIRM_ACTION</code> minimum when <code>source=ai</code>, preventing Model Sub-Delegation through this vector without human approval. Dangerous ports escalate to <code>CONFIRM_TYPED</code> on any target host. Cloud metadata endpoints are denied regardless of port. See §11.</p>
 
     <p><strong>Argument-Level Bypass Coverage.</strong> The base arg rule table covers 40 flag-level attack vectors, including: interpreter bypass via <code>env</code>, recursive deletion via <code>find -delete</code>, arbitrary execution via <code>find -exec</code>, persistent tunnel creation via <code>ssh -L/-R/-D/-w</code>, raw device read via <code>dd if=/dev/...</code>, and backdoor listener via <code>nc -l</code>.</p>
-  </section>
+
+    <p><strong>Unified Human Operator Mode — Safety Net, Teaching Tool, and Disciplined Workflow.</strong> Both binaries operate interactively when stdin is a terminal. <code>aishell-gate-policy</code> interactive mode is a purely educational surface: it assesses commands, explains every flag with its documented reasoning, and emits a gateway echo line — it never executes. <code>aishell-gate-exec</code> interactive mode is the execution surface: it enforces confirmation gates and runs commands with a full audit trail. The same policy file governs both AI agent sessions and human operator sessions. The 2,088-entry flag catalog — where every <code>FLAG_WARN</code> and <code>FLAG_DANGER</code> entry carries a specific documented reason rather than a generic label — functions as an active teaching instrument: a junior operator who types an unfamiliar flag receives an explanation of precisely why that flag raises the risk profile, delivered at the point of use. <code>FLAG_UNKNOWN</code> is explicitly labelled "risk unassessed, not evaluated as safe," teaching practitioners that absence of a denial is not an implicit safety determination.</p>
+
+    <p><strong>Dry-Run JSON (<code>--dry-run-json</code>).</strong> The executor produces a machine-readable JSON document on stdout describing every action that would execute — including the resolved binary path, validated argv array, confirm level, risk score, layer, and reason — without executing any of them. Designed for AI agents that inspect a plan before committing to live execution. Policy evaluation, confirmation checking, and the audit chain all run normally; only the OS-level execve() call is suppressed. The output carries the <code>aishell-gate-dry-run 1.0</code> protocol block so consumers can detect schema version.</p>
+
+    <p><strong>Policy Test Mode (<code>--test-plan</code>).</strong> The policy engine accepts a JSON file of test cases and evaluates each against the active policy, reporting PASS or FAIL per case and exiting non-zero on any failure. Each test case specifies a command, an expected decision (allow or deny), an optional preset, and an optional label. Suitable for committing alongside policy files and running as a CI gate — a policy change that breaks an expected allow or deny is caught before deployment. Exit 0 means all tests passed; exit 1 means failures; exit 2 means file or parse error.</p>
+
+    <p><strong>Network Default-Deny (<code>net_default_deny</code>).</strong> Network enforcement is decoupled from command enforcement. In <code>ops_safe</code>, <code>read_only</code>, and <code>dev_sandbox</code> presets, detected network targets must have explicit allow rules or the command is denied. CI presets set <code>net_default_deny</code> to false, allowing unrestricted network access for build pipelines. Configurable per-project via override files.</p>
+
+    <p><strong>Wire Protocol Versioning.</strong> All four JSON interfaces carry a named protocol block: <code>aishell-gate-exec-input 1.0</code> (agent → exec), <code>aishell-gate-policy-response 1.0</code> (policy engine output), <code>aishell-gate-dry-run 1.0</code> (dry-run inspection output), and <code>aishell-gate-mcp 1.0</code> (MCP tool responses). Major version bumps signal breaking changes; minor bumps are additive only. The executor validates incoming envelopes and rejects unknown protocol names or unsupported major versions with a clear error.</p>
+
+    <p><strong>Expanded Flag Catalog (2,088 entries).</strong> Additions cover ansible and ansible-playbook (54 entries including privilege escalation flags <code>--become</code>/<code>--become-user</code>), az/Azure CLI (33 entries with <code>--yes</code> as FLAG_DANGER), extended kubectl (34 additional entries including <code>drain</code>, <code>--force</code>, <code>run</code>, <code>proxy</code>), extended terraform (18 entries including <code>-auto-approve</code> and <code>-migrate-state</code>), extended helm (24 entries), insmod/rmmod/kexec (kernel module and boot chain operations, all FLAG_DANGER), fdisk/parted/sfdisk/sgdisk (disk partitioning), debugfs (VFS-bypass filesystem access), socat (bidirectional relay with full EXEC/SYSTEM/TCP-LISTEN coverage), nft/nftables (firewall rule management), the full LVM suite (lvcreate through pvremove), and extended aws/gcloud CLI flags.</p>
 
   <!-- ── 16 ── -->
   <section id="audit">
@@ -859,11 +898,79 @@ snprintf(buf, sizeof buf,
     <p>This provides a lightweight, dependency-free audit record suitable for compliance review, incident reconstruction, and policy tuning.</p>
   </section>
 
-  <!-- ── 17 ── -->
-  <section id="status">
-    <h2><span class="section-num">17</span> Status</h2>
 
-    <p>AIShell-Gate 1.02 is a beta release. The architecture is stable and has been in iterative development and hardening since the initial prototype. The policy model, execution gateway, audit chain, and loopback detection system are all functional. Access is currently by arrangement while final pre-release validation is completed. Feedback from practitioners introducing AI into Unix workflows is welcomed and actively shapes the roadmap.</p>
+  <!-- ── 17 ── -->
+  <section id="mcp">
+    <h2><span class="section-num">17</span> MCP Integration — aishell-gate-mcp</h2>
+
+    <p><code>aishell-gate-mcp</code> is an MCP (Model Context Protocol) server that exposes AIShell-Gate to AI coding environments — Claude Code, Cursor, and any client implementing the MCP standard — over a stdio transport. It requires no additional infrastructure: a single entry in the project's <code>.mcp.json</code> launches the server as a subprocess, and the AI coding environment discovers the tools automatically.</p>
+
+    <div class="aside">
+      <strong>The scope of this tool</strong>
+      Every other MCP tool gives an AI access to one capability — a calendar, a database, a code search index. AIShell-Gate gives it access to the operating system, which is the thing that contains everything else. The MCP interface is what makes that access distributable to every AI coding environment in the ecosystem. The policy engine is what makes it safe.
+    </div>
+
+    <h3>Two Tools</h3>
+    <p><code>evaluate_plan</code> submits a goal and list of commands to the policy engine via <code>--dry-run-json</code>. It returns a structured assessment: per-action decision, confirm level, resolved binary path, risk score, layer, and reason. Nothing executes. The tool is designed as a pre-flight check — the agent can inspect the full plan assessment before committing to live execution, identify denied actions, and surface confirmation requirements to the operator.</p>
+
+    <p><code>execute_plan</code> submits a goal and list of commands for live execution. It runs an internal pre-flight evaluation first. If any action requires confirm level <code>action</code> or <code>typed</code>, execution is blocked and a structured report is returned identifying the specific actions and the reason confirmation is required. The operator can then lower the confirm level in their policy file, approve the actions manually, or restructure the plan. If the pre-flight passes with only <code>none</code> or <code>plan</code> level actions, live execution proceeds via <code>aishell-gate-exec</code>.</p>
+
+    <h3>Confirmation Model</h3>
+    <p>The MCP interface enforces a block-and-report model for confirmation in v1.0. Actions at <code>action</code> level return a structured response listing every affected action and the reason confirmation is required; the operator is expected to review these and adjust policy or proceed manually. Actions at <code>typed</code> level are blocked unconditionally — typed confirmation requires a human at a terminal, which the MCP interface cannot provide. This is intentional: <code>typed</code> confirmation is designed to be structurally inaccessible to any automated channel. An operator who wants a class of commands to run through the MCP interface without blocking can lower the confirm level in their policy file for trusted workflows.</p>
+
+    <h3>Configuration</h3>
+    <p>An <code>aishell-mcp.json</code> file in the project directory configures the server. All fields are optional with sensible defaults:</p>
+
+<pre><code><span class="cm">// aishell-mcp.json — all fields optional</span>
+{
+  "exec_binary":    "aishell-gate-exec",    <span class="cm">// resolved via PATH if not absolute</span>
+  "policy_binary":  "aishell-gate-policy",
+  "preset":         "ops_safe",
+  "jail_root":      null,                   <span class="cm">// confine writes to this directory tree</span>
+  "policy_base":    null,
+  "policy_project": null,
+  "policy_user":    null,
+  "source":         "ai",
+  "audit_log":      null,
+  "extra_flags":    []
+}</code></pre>
+
+    <p>Claude Code / Cursor integration is a single entry in <code>.mcp.json</code>:</p>
+<pre><code>{
+  "mcpServers": {
+    "aishell-gate": {
+      "command": "python3",
+      "args": ["/path/to/aishell-gate-mcp.py"]
+    }
+  }
+}</code></pre>
+
+    <h3>Protocol Versioning</h3>
+    <p>Every MCP tool response carries a protocol block: <code>{"name": "aishell-gate-mcp", "version": "1.0"}</code>. The server validates protocol blocks in exec responses and rejects mismatched names or unsupported major versions with a clear error. The full wire protocol inventory for v1.0:</p>
+
+    <table class="data-table">
+      <thead><tr><th>Protocol name</th><th>Version</th><th>Direction</th></tr></thead>
+      <tbody>
+        <tr><td>aishell-gate-exec-input</td><td>1.0</td><td>MCP server / agent → aishell-gate-exec (stdin)</td></tr>
+        <tr><td>aishell-gate-policy-response</td><td>1.0</td><td>aishell-gate-policy → aishell-gate-exec (stdout)</td></tr>
+        <tr><td>aishell-gate-dry-run</td><td>1.0</td><td>aishell-gate-exec → caller (stdout, --dry-run-json)</td></tr>
+        <tr><td>aishell-gate-mcp</td><td>1.0</td><td>aishell-gate-mcp → MCP client (tool responses)</td></tr>
+      </tbody>
+    </table>
+
+    <p>Major version bumps signal breaking changes. Minor bumps are additive only; receivers must tolerate unknown minor versions without error. This versioning contract is in force as of v1.02 and will govern all future protocol evolution.</p>
+
+    <h3>Broker Compatibility (v2 Seam)</h3>
+    <p>In v1.0, the MCP server invokes <code>aishell-gate-exec</code> directly as a subprocess. A v2 broker daemon — planned as a third program — will accept multiple concurrent AI agents and human operators, with exec and the policy engine as a shared back end. The MCP server's broker seam is a single function: <code>_invoke_exec()</code>. In v2, replacing the subprocess call with a socket connection to the broker is a one-function change; all tool logic, protocol handling, and config loading are unchanged.</p>
+  </section>
+
+  <!-- ── 18 ── -->
+  <section id="status">
+    <h2><span class="section-num">18</span> Status</h2>
+
+    <p>AIShell-Gate 1.02 is a beta release. The architecture is stable and has been in iterative development and hardening since the initial prototype. All five build variants — standard policy, enterprise policy, standard exec, enterprise exec, and evaluation exec — compile clean against C11 with <code>-Wall -Wextra</code> and zero errors. The full test suite passes: 55 policy unit tests, 87 executor unit tests, 35 end-to-end tests, 34 catalog tests, and 12 standard-edition smoke tests. The policy model, execution gateway, audit chain, loopback detection system, MCP server, and all wire protocol interfaces are functional. Access is currently by arrangement while final pre-release validation is completed. Feedback from practitioners introducing AI into Unix workflows is welcomed and actively shapes the roadmap.</p>
+
+    <p><strong>v1.02 additions since v1.01:</strong> aishell-gate-mcp MCP server; flag catalog expanded to 2,088 entries; <code>net_default_deny</code> network enforcement model; <code>--dry-run-json</code> machine-readable plan inspection; <code>--test-plan</code> policy test mode; wire protocol versioning across all four JSON interfaces; Standard/Enterprise edition split compiled and verified.</p>
 
     <p>Security inquiries and deployment questions: <a href="https://www.aishellgate.com" style="color:var(--accent);">www.aishellgate.com</a> &nbsp;·&nbsp; <a href="https://www.aishell.org" style="color:var(--accent);">www.aishell.org</a></p>
 
@@ -873,13 +980,13 @@ snprintf(buf, sizeof buf,
 
       As AI systems increasingly interact with infrastructure, databases, networks, and operational tooling, similar execution boundaries will likely become a necessary architectural component. AIShell-Gate demonstrates how such a boundary can be implemented for Unix command execution: simple, deterministic, and auditable.
 
-      AI systems are capable of generating powerful commands. Power without policy is risk. AIShell-Gate exists to make the boundary explicit.
+      The MCP interface makes the point concrete. Every other MCP tool gives an AI agent access to one capability. AIShell-Gate gives it access to the operating system — the thing that contains everything else. The policy engine is what makes that access safe. Power without policy is risk. AIShell-Gate exists to make the boundary explicit.
     </div>
   </section>
 
   <!-- ── Glossary ── -->
   <section id="glossary">
-    <h2><span class="section-num">18</span> Terminology Glossary</h2>
+    <h2><span class="section-num">19</span> Terminology Glossary</h2>
 
     <p>The following terms are introduced or formally defined in this paper. Several fill gaps in existing security vocabulary where the concepts are genuinely novel or where existing terms are insufficiently precise for the AI execution context.</p>
 
@@ -931,11 +1038,23 @@ snprintf(buf, sizeof buf,
       <div class="glossary-ref">See §5, §6, §15 · Implementation: <code>--policy-preset</code> flag · Related: Policy Preset</div>
     </div>
 
+    <div class="glossary-entry">
+      <div class="glossary-term">Net Default-Deny <span class="term-cat">Policy Property</span></div>
+      <p class="glossary-def">A network enforcement posture in which any command with a detected network target — a URL, <code>host:port</code>, or parseable address in its arguments — must have an explicit allow entry in the active <code>net_rules</code> policy for every target. Targets with no matching allow rule are denied rather than warned, mirroring the command policy model. Net Default-Deny is governed by the <code>net_default_deny</code> flag on the policy stack, which is decoupled from the command default-deny gate to allow CI presets to enable unrestricted network access for build pipelines without relaxing command policy. The built-in cloud metadata denial rules are unconditional and operate independently of <code>net_default_deny</code>.</p>
+      <div class="glossary-ref">Introduced §5 · Implementation: <code>net_default_deny</code> field · Related: Default Deny, Execution Posture</div>
+    </div>
+
+    <div class="glossary-entry">
+      <div class="glossary-term">Broker Seam <span class="term-cat">Architecture Property</span></div>
+      <p class="glossary-def">A deliberately isolated integration point in <code>aishell-gate-mcp</code> — a single function, <code>_invoke_exec()</code> — that handles all communication between the MCP server and the execution backend. In v1.0 this function invokes <code>aishell-gate-exec</code> as a local subprocess. In v2.0 it will be replaced with a connection to the broker daemon, which manages concurrent AI agent and human operator sessions over a shared execution back end. The broker seam design principle ensures that all protocol handling, tool logic, and configuration loading above the seam are unchanged when the underlying transport changes. The pattern is analogous to the policy/mechanism separation that governs the two-binary architecture.</p>
+      <div class="glossary-ref">See §17 · Implementation: aishell-gate-mcp · Related: Policy/Mechanism Separation</div>
+    </div>
+
   </section>
 
   <!-- ── References ── -->
   <section id="references">
-    <h2><span class="section-num">19</span> References</h2>
+    <h2><span class="section-num">20</span> References</h2>
 
     <ul class="ref-list">
 
@@ -1067,6 +1186,7 @@ snprintf(buf, sizeof buf,
       <p>This document is provided for informational purposes only and does not constitute legal, security, compliance, or operational advice. Shell commands and AI-driven automation carry inherent risk, including the possibility of irreversible data loss. You are solely responsible for evaluating the suitability of any approach described herein for your environment.</p>
       <p>AIShell Labs LLC makes no warranty, express or implied, regarding the accuracy or completeness of this document. To the maximum extent permitted by applicable law, AIShell Labs LLC shall not be liable for any damages arising from reliance on this document or use of the software described herein.</p>
       <p style="margin-top:0.8rem;">Sean T. Gilley is the author of <em>The Shape of Intent: Steering Artificial Intelligence in Cognitive Collaboration</em>.</p>
+      <p style="margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border); font-family:'IBM Plex Mono',monospace; font-size:0.72rem; color:var(--text-dim); line-height:1.7;">"AIShell-Gate" Copyright (c) 2026 AIShell Labs LLC Winston-Salem NC USA. All Rights Reserved. Author: Sean T. Gilley. Do not remove this notice. Use of this Software requires a valid license. Evaluation copies expire 30 days from download.<br><br>THIS SOFTWARE IS PROVIDED BY AISHELL LABS LLC "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL AISHELL LABS LLC BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.<br><br>For full license terms see the LICENSE file or: <a href="https://www.aishellgate.com" style="color:var(--accent);">www.aishellgate.com</a> &nbsp;·&nbsp; <a href="https://www.aishell.org/aishellgate" style="color:var(--accent);">www.aishell.org/aishellgate</a></p>
     </div>
   </footer>
 
