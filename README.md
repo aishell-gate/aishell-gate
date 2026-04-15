@@ -42,7 +42,7 @@ AIShell-Gate intercepts every proposed command — whether from an AI agent, a h
 
 AIShell-Gate ships as five components that work together:
 
-**aishell-gate-policy** — The policy engine. Receives a proposed command, evaluates it, and returns a structured JSON decision. It never executes anything. This is the component that enforces your rules. It is available under a free individual license for personal, non-commercial use.
+**aishell-gate-policy** — The policy engine. Receives a proposed command, evaluates it, and returns a structured JSON decision. It never executes anything. This is the component that enforces your rules.
 
 **aishell-gate-exec** — The execution gateway. Reads a JSON action plan from an AI agent or operator, submits each command to the policy engine, collects the required human confirmation, and — only if the policy allows and the operator confirms — calls `execve()` with the validated argument array. No shell is ever invoked. This component is commercially licensed.
 
@@ -175,9 +175,13 @@ AIShell-Gate 1.0 is currently in a controlled beta program. The beta testing pac
 
 ## License
 
-**aishell-gate-policy** is available at no charge to individual users for personal, non-commercial, single-operator use. See the LICENSE file for full conditions.
+AIShell-Gate is available under three license tiers:
 
-**aishell-gate-exec, aishell-confirm, and aishell-gate** require a commercial license. Fixed-host and cloud/ephemeral deployment licensing is available. Beta evaluation copies expire 30 days from the date of delivery.
+**Evaluation** — A time-limited evaluation copy is available at no charge. Evaluation copies operate with a reduced feature set and may not be used in production environments. See the LICENSE file for full conditions.
+
+**Standard Edition** — Perpetual, single fixed host. Activated with a license key issued at time of purchase. Until activated, the Software displays an "Unlicensed" notice at each invocation.
+
+**Enterprise Edition** — Perpetual, single fixed host. Issued as a cryptographically signed license file bound to the hardware identity of the licensed host. Includes all features, direct support, and cloud/ephemeral deployment licensing.
 
 License inquiries: [www.aishellgate.com](https://www.aishellgate.com)
 
@@ -194,7 +198,7 @@ License inquiries: [www.aishellgate.com](https://www.aishellgate.com)
 | Policy Man Page | Complete policy file reference, rule syntax, preset definitions, --test-plan |
 | Executor Man Page | Full flag reference, --dry-run-json, JSON plan format, audit log specification |
 
-All documentation ships with the beta testing package and is available at [www.aishellgate.com](https://www.aishellgate.com).
+All documentation ships with the beta testing package and is available at [www.aishellgate.com](https://www.aishellgate.com). Documents listed above are not included in this repository.
 
 ---
 
